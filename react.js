@@ -1,55 +1,7 @@
 /**
  * React v0.9.0-alpha
  */
-!function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.React=e():"undefined"!=typeof global?global.React=e():"undefined"!=typeof self&&(self.React=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-/**
- * Copyright 2013 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * @providesModule $
- * @typechecks
- */
-
-var ge = require("./ge");
-var ex = require("./ex");
-
-/**
- * Find a node by ID.
- *
- * If your application code depends on the existence of the element, use $,
- * which will throw if the element doesn't exist.
- *
- * If you're not sure whether or not the element exists, use ge instead, and
- * manually check for the element's existence in your application code.
- *
- * @param {string|DOMDocument|DOMElement|DOMTextNode|Comment} id
- * @return {DOMDocument|DOMElement|DOMTextNode|Comment}
- */
-function $(id) {
-  var element = ge(id);
-  if (!element) {
-    throw new Error(ex(
-      'Tried to get element with id of "%s" but it is not present on the page.',
-      id
-    ));
-  }
-  return element;
-}
-
-module.exports = $;
-
-},{"./ex":93,"./ge":97}],2:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.React=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -81,7 +33,7 @@ var AutoFocusMixin = {
 
 module.exports = AutoFocusMixin;
 
-},{}],3:[function(require,module,exports){
+},{}],2:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -106,11 +58,21 @@ module.exports = AutoFocusMixin;
  * CSS properties which accept numbers but are not in units of "px".
  */
 var isUnitlessNumber = {
+  columnCount: true,
   fillOpacity: true,
+  flex: true,
+  flexGrow: true,
+  flexShrink: true,
   fontWeight: true,
   lineHeight: true,
   opacity: true,
+  order: true,
   orphans: true,
+  pitchRange: true,
+  richness: true,
+  stress: true,
+  volume: true,
+  widows: true,
   zIndex: true,
   zoom: true
 };
@@ -173,7 +135,7 @@ var CSSProperty = {
 
 module.exports = CSSProperty;
 
-},{}],4:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -272,110 +234,7 @@ var CSSPropertyOperations = {
 
 module.exports = CSSPropertyOperations;
 
-},{"./CSSProperty":3,"./dangerousStyleValue":90,"./escapeTextForBrowser":92,"./hyphenate":105,"./memoizeStringOnly":114}],5:[function(require,module,exports){
-/**
- * Copyright 2013 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * @providesModule CallbackRegistry
- * @typechecks static-only
- */
-
-"use strict";
-
-var isEventSupported = require("./isEventSupported");
-
-var listenerBank = {};
-
-/**
- * Stores "listeners" by `registrationName`/`id`. There should be at most one
- * "listener" per `registrationName`/`id` in the `listenerBank`.
- *
- * Access listeners via `listenerBank[registrationName][id]`.
- *
- * @class CallbackRegistry
- * @internal
- */
-var CallbackRegistry = {
-
-  /**
-   * Stores `listener` at `listenerBank[registrationName][id]`. Is idempotent.
-   *
-   * @param {string} id ID of the DOM element.
-   * @param {string} registrationName Name of listener (e.g. `onClick`).
-   * @param {?function} listener The callback to store.
-   */
-  putListener: function(id, registrationName, listener) {
-    if ("production" !== "development") {
-      // IE8 has no API for event capturing and the `onScroll` event doesn't
-      // bubble.
-      if (registrationName === 'onScroll' &&
-          !isEventSupported('scroll', true)) {
-        console.warn('This browser doesn\'t support the `onScroll` event');
-      }
-    }
-    var bankForRegistrationName =
-      listenerBank[registrationName] || (listenerBank[registrationName] = {});
-    bankForRegistrationName[id] = listener;
-  },
-
-  /**
-   * @param {string} id ID of the DOM element.
-   * @param {string} registrationName Name of listener (e.g. `onClick`).
-   * @return {?function} The stored callback.
-   */
-  getListener: function(id, registrationName) {
-    var bankForRegistrationName = listenerBank[registrationName];
-    return bankForRegistrationName && bankForRegistrationName[id];
-  },
-
-  /**
-   * Deletes a listener from the registration bank.
-   *
-   * @param {string} id ID of the DOM element.
-   * @param {string} registrationName Name of listener (e.g. `onClick`).
-   */
-  deleteListener: function(id, registrationName) {
-    var bankForRegistrationName = listenerBank[registrationName];
-    if (bankForRegistrationName) {
-      delete bankForRegistrationName[id];
-    }
-  },
-
-  /**
-   * Deletes all listeners for the DOM element with the supplied ID.
-   *
-   * @param {string} id ID of the DOM element.
-   */
-  deleteAllListeners: function(id) {
-    for (var registrationName in listenerBank) {
-      delete listenerBank[registrationName][id];
-    }
-  },
-
-  /**
-   * This is needed for tests only. Do not use!
-   */
-  __purge: function() {
-    listenerBank = {};
-  }
-
-};
-
-module.exports = CallbackRegistry;
-
-},{"./isEventSupported":107}],6:[function(require,module,exports){
+},{"./CSSProperty":2,"./dangerousStyleValue":90,"./escapeTextForBrowser":92,"./hyphenate":103,"./memoizeStringOnly":112}],4:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -400,6 +259,7 @@ var EventConstants = require("./EventConstants");
 var EventPluginHub = require("./EventPluginHub");
 var EventPropagators = require("./EventPropagators");
 var ExecutionEnvironment = require("./ExecutionEnvironment");
+var ReactUpdates = require("./ReactUpdates");
 var SyntheticEvent = require("./SyntheticEvent");
 
 var isEventSupported = require("./isEventSupported");
@@ -413,7 +273,17 @@ var eventTypes = {
     phasedRegistrationNames: {
       bubbled: keyOf({onChange: null}),
       captured: keyOf({onChangeCapture: null})
-    }
+    },
+    dependencies: [
+      topLevelTypes.topBlur,
+      topLevelTypes.topChange,
+      topLevelTypes.topClick,
+      topLevelTypes.topFocus,
+      topLevelTypes.topInput,
+      topLevelTypes.topKeyDown,
+      topLevelTypes.topKeyUp,
+      topLevelTypes.topSelectionChange
+    ]
   }
 };
 
@@ -451,10 +321,21 @@ function manualDispatchChangeEvent(nativeEvent) {
   );
   EventPropagators.accumulateTwoPhaseDispatches(event);
 
-  // If change bubbled, we'd just bind to it like all the other events
-  // and have it go through ReactEventTopLevelCallback. Since it doesn't, we
-  // manually listen for the change event and so we have to enqueue and
+  // If change and propertychange bubbled, we'd just bind to it like all the
+  // other events and have it go through ReactEventTopLevelCallback. Since it
+  // doesn't, we manually listen for the events and so we have to enqueue and
   // process the abstract event manually.
+  //
+  // Batching is necessary here in order to ensure that all event handlers run
+  // before the next rerender (including event handlers attached to ancestor
+  // elements instead of directly on the input). Without this, controlled
+  // components don't work properly in conjunction with event bubbling because
+  // the component is rerendered and the value reverted before all the event
+  // handlers can run. See https://github.com/facebook/react/issues/708.
+  ReactUpdates.batchedUpdates(runEventInBatch, event);
+}
+
+function runEventInBatch(event) {
   EventPluginHub.enqueueEvents(event);
   EventPluginHub.processEventQueue();
 }
@@ -742,7 +623,7 @@ var ChangeEventPlugin = {
 
 module.exports = ChangeEventPlugin;
 
-},{"./EventConstants":16,"./EventPluginHub":18,"./EventPropagators":21,"./ExecutionEnvironment":22,"./SyntheticEvent":74,"./isEventSupported":107,"./isTextInputElement":109,"./keyOf":113}],7:[function(require,module,exports){
+},{"./EventConstants":14,"./EventPluginHub":16,"./EventPropagators":19,"./ExecutionEnvironment":20,"./ReactUpdates":66,"./SyntheticEvent":73,"./isEventSupported":105,"./isTextInputElement":107,"./keyOf":111}],5:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -774,7 +655,7 @@ var ClientReactRootIndex = {
 
 module.exports = ClientReactRootIndex;
 
-},{}],8:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -808,8 +689,22 @@ var keyOf = require("./keyOf");
 var END_KEYCODES = [9, 13, 27, 32]; // Tab, Return, Esc, Space
 var START_KEYCODE = 229;
 
-var useCompositionEvent = ExecutionEnvironment.canUseDOM &&
-  'CompositionEvent' in window;
+var useCompositionEvent = (
+  ExecutionEnvironment.canUseDOM &&
+  'CompositionEvent' in window
+);
+
+// In IE9+, we have access to composition events, but the data supplied
+// by the native compositionend event may be incorrect. In Korean, for example,
+// the compositionend event contains only one character regardless of
+// how many characters have been composed since compositionstart.
+// We therefore use the fallback data while still using the native
+// events as triggers.
+var useFallbackData = (
+  !useCompositionEvent ||
+  'documentMode' in document && document.documentMode > 8
+);
+
 var topLevelTypes = EventConstants.topLevelTypes;
 var currentComposition = null;
 
@@ -819,19 +714,43 @@ var eventTypes = {
     phasedRegistrationNames: {
       bubbled: keyOf({onCompositionEnd: null}),
       captured: keyOf({onCompositionEndCapture: null})
-    }
+    },
+    dependencies: [
+      topLevelTypes.topBlur,
+      topLevelTypes.topCompositionEnd,
+      topLevelTypes.topKeyDown,
+      topLevelTypes.topKeyPress,
+      topLevelTypes.topKeyUp,
+      topLevelTypes.topMouseDown
+    ]
   },
   compositionStart: {
     phasedRegistrationNames: {
       bubbled: keyOf({onCompositionStart: null}),
       captured: keyOf({onCompositionStartCapture: null})
-    }
+    },
+    dependencies: [
+      topLevelTypes.topBlur,
+      topLevelTypes.topCompositionStart,
+      topLevelTypes.topKeyDown,
+      topLevelTypes.topKeyPress,
+      topLevelTypes.topKeyUp,
+      topLevelTypes.topMouseDown
+    ]
   },
   compositionUpdate: {
     phasedRegistrationNames: {
       bubbled: keyOf({onCompositionUpdate: null}),
       captured: keyOf({onCompositionUpdateCapture: null})
-    }
+    },
+    dependencies: [
+      topLevelTypes.topBlur,
+      topLevelTypes.topCompositionUpdate,
+      topLevelTypes.topKeyDown,
+      topLevelTypes.topKeyPress,
+      topLevelTypes.topKeyUp,
+      topLevelTypes.topMouseDown
+    ]
   }
 };
 
@@ -960,13 +879,23 @@ var CompositionEventPlugin = {
       eventType = getCompositionEventType(topLevelType);
     } else if (!currentComposition) {
       if (isFallbackStart(topLevelType, nativeEvent)) {
-        eventType = eventTypes.start;
-        currentComposition = new FallbackCompositionState(topLevelTarget);
+        eventType = eventTypes.compositionStart;
       }
     } else if (isFallbackEnd(topLevelType, nativeEvent)) {
       eventType = eventTypes.compositionEnd;
-      data = currentComposition.getData();
-      currentComposition = null;
+    }
+
+    if (useFallbackData) {
+      // The current composition is stored statically and must not be
+      // overwritten while composition continues.
+      if (!currentComposition && eventType === eventTypes.compositionStart) {
+        currentComposition = new FallbackCompositionState(topLevelTarget);
+      } else if (eventType === eventTypes.compositionEnd) {
+        if (currentComposition) {
+          data = currentComposition.getData();
+          currentComposition = null;
+        }
+      }
     }
 
     if (eventType) {
@@ -988,7 +917,7 @@ var CompositionEventPlugin = {
 
 module.exports = CompositionEventPlugin;
 
-},{"./EventConstants":16,"./EventPropagators":21,"./ExecutionEnvironment":22,"./ReactInputSelection":50,"./SyntheticCompositionEvent":72,"./getTextContentAccessor":103,"./keyOf":113}],9:[function(require,module,exports){
+},{"./EventConstants":14,"./EventPropagators":19,"./ExecutionEnvironment":20,"./ReactInputSelection":49,"./SyntheticCompositionEvent":71,"./getTextContentAccessor":101,"./keyOf":111}],7:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -1125,7 +1054,7 @@ var DOMChildrenOperations = {
 
 module.exports = DOMChildrenOperations;
 
-},{"./Danger":12,"./ReactMultiChildUpdateTypes":56,"./getTextContentAccessor":103}],10:[function(require,module,exports){
+},{"./Danger":10,"./ReactMultiChildUpdateTypes":55,"./getTextContentAccessor":101}],8:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -1395,7 +1324,7 @@ var DOMProperty = {
 
 module.exports = DOMProperty;
 
-},{"./invariant":106}],11:[function(require,module,exports){
+},{"./invariant":104}],9:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -1575,7 +1504,7 @@ var DOMPropertyOperations = {
 
 module.exports = DOMPropertyOperations;
 
-},{"./DOMProperty":10,"./escapeTextForBrowser":92,"./memoizeStringOnly":114}],12:[function(require,module,exports){
+},{"./DOMProperty":8,"./escapeTextForBrowser":92,"./memoizeStringOnly":112}],10:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -1605,7 +1534,6 @@ var createNodesFromMarkup = require("./createNodesFromMarkup");
 var emptyFunction = require("./emptyFunction");
 var getMarkupWrap = require("./getMarkupWrap");
 var invariant = require("./invariant");
-var mutateHTMLNodeWithMarkup = require("./mutateHTMLNodeWithMarkup");
 
 var OPEN_TAG_NAME_EXP = /^(<[^ \/>]+)/;
 var RESULT_INDEX_ATTR = 'data-danger-index';
@@ -1749,12 +1677,14 @@ var Danger = {
       'immediately.'
     ) : invariant(ExecutionEnvironment.canUseDOM));
     ("production" !== "development" ? invariant(markup, 'dangerouslyReplaceNodeWithMarkup(...): Missing markup.') : invariant(markup));
-    // createNodesFromMarkup() won't work if the markup is rooted by <html>
-    // since it has special semantic meaning. So we use an alternatie strategy.
-    if (oldChild.tagName.toLowerCase() === 'html') {
-      mutateHTMLNodeWithMarkup(oldChild, markup);
-      return;
-    }
+    ("production" !== "development" ? invariant(
+      oldChild.tagName.toLowerCase() !== 'html',
+      'dangerouslyReplaceNodeWithMarkup(...): Cannot replace markup of the ' +
+      '<html> node. This is because browser quirks make this unreliable ' +
+      'and/or slow. If you want to render to the root you must use ' +
+      'server rendering. See renderComponentToString().'
+    ) : invariant(oldChild.tagName.toLowerCase() !== 'html'));
+
     var newChild = createNodesFromMarkup(markup, emptyFunction)[0];
     oldChild.parentNode.replaceChild(newChild, oldChild);
   }
@@ -1763,7 +1693,7 @@ var Danger = {
 
 module.exports = Danger;
 
-},{"./ExecutionEnvironment":22,"./createNodesFromMarkup":88,"./emptyFunction":91,"./getMarkupWrap":100,"./invariant":106,"./mutateHTMLNodeWithMarkup":119}],13:[function(require,module,exports){
+},{"./ExecutionEnvironment":20,"./createNodesFromMarkup":88,"./emptyFunction":91,"./getMarkupWrap":98,"./invariant":104}],11:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -1862,10 +1792,12 @@ var DefaultDOMPropertyConfig = {
     role: MUST_USE_ATTRIBUTE,
     rows: MUST_USE_ATTRIBUTE | HAS_POSITIVE_NUMERIC_VALUE,
     rowSpan: null,
+    scope: null,
     scrollLeft: MUST_USE_PROPERTY,
     scrollTop: MUST_USE_PROPERTY,
     selected: MUST_USE_PROPERTY | HAS_BOOLEAN_VALUE,
     size: MUST_USE_ATTRIBUTE | HAS_POSITIVE_NUMERIC_VALUE,
+    span: HAS_POSITIVE_NUMERIC_VALUE,
     spellCheck: null,
     src: null,
     step: null,
@@ -1954,7 +1886,7 @@ var DefaultDOMPropertyConfig = {
 
 module.exports = DefaultDOMPropertyConfig;
 
-},{"./DOMProperty":10}],14:[function(require,module,exports){
+},{"./DOMProperty":8}],12:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2000,7 +1932,7 @@ var DefaultEventPluginOrder = [
 
 module.exports = DefaultEventPluginOrder;
 
-},{"./keyOf":113}],15:[function(require,module,exports){
+},{"./keyOf":111}],13:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2033,8 +1965,20 @@ var topLevelTypes = EventConstants.topLevelTypes;
 var getFirstReactDOM = ReactMount.getFirstReactDOM;
 
 var eventTypes = {
-  mouseEnter: {registrationName: keyOf({onMouseEnter: null})},
-  mouseLeave: {registrationName: keyOf({onMouseLeave: null})}
+  mouseEnter: {
+    registrationName: keyOf({onMouseEnter: null}),
+    dependencies: [
+      topLevelTypes.topMouseOut,
+      topLevelTypes.topMouseOver
+    ]
+  },
+  mouseLeave: {
+    registrationName: keyOf({onMouseLeave: null}),
+    dependencies: [
+      topLevelTypes.topMouseOut,
+      topLevelTypes.topMouseOver
+    ]
+  }
 };
 
 var extractedEvents = [null, null];
@@ -2072,14 +2016,28 @@ var EnterLeaveEventPlugin = {
       return null;
     }
 
+    var win;
+    if (topLevelTarget.window === topLevelTarget) {
+      // `topLevelTarget` is probably a window object.
+      win = topLevelTarget;
+    } else {
+      // TODO: Figure out why `ownerDocument` is sometimes undefined in IE8.
+      var doc = topLevelTarget.ownerDocument;
+      if (doc) {
+        win = doc.defaultView || doc.parentWindow;
+      } else {
+        win = window;
+      }
+    }
+
     var from, to;
     if (topLevelType === topLevelTypes.topMouseOut) {
       from = topLevelTarget;
       to =
         getFirstReactDOM(nativeEvent.relatedTarget || nativeEvent.toElement) ||
-        window;
+        win;
     } else {
-      from = window;
+      from = win;
       to = topLevelTarget;
     }
 
@@ -2096,11 +2054,18 @@ var EnterLeaveEventPlugin = {
       fromID,
       nativeEvent
     );
+    leave.type = 'mouseleave';
+    leave.target = from;
+    leave.relatedTarget = to;
+
     var enter = SyntheticMouseEvent.getPooled(
       eventTypes.mouseEnter,
       toID,
       nativeEvent
     );
+    enter.type = 'mouseenter';
+    enter.target = to;
+    enter.relatedTarget = from;
 
     EventPropagators.accumulateEnterLeaveDispatches(leave, enter, fromID, toID);
 
@@ -2114,7 +2079,7 @@ var EnterLeaveEventPlugin = {
 
 module.exports = EnterLeaveEventPlugin;
 
-},{"./EventConstants":16,"./EventPropagators":21,"./ReactMount":53,"./SyntheticMouseEvent":77,"./keyOf":113}],16:[function(require,module,exports){
+},{"./EventConstants":14,"./EventPropagators":19,"./ReactMount":52,"./SyntheticMouseEvent":76,"./keyOf":111}],14:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2166,6 +2131,7 @@ var topLevelTypes = keyMirror({
   topKeyDown: null,
   topKeyPress: null,
   topKeyUp: null,
+  topLoad: null,
   topMouseDown: null,
   topMouseMove: null,
   topMouseOut: null,
@@ -2189,7 +2155,7 @@ var EventConstants = {
 
 module.exports = EventConstants;
 
-},{"./keyMirror":112}],17:[function(require,module,exports){
+},{"./keyMirror":110}],15:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2252,7 +2218,7 @@ var EventListener = {
 
 module.exports = EventListener;
 
-},{}],18:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2273,15 +2239,18 @@ module.exports = EventListener;
 
 "use strict";
 
-var CallbackRegistry = require("./CallbackRegistry");
 var EventPluginRegistry = require("./EventPluginRegistry");
 var EventPluginUtils = require("./EventPluginUtils");
-var EventPropagators = require("./EventPropagators");
-var ExecutionEnvironment = require("./ExecutionEnvironment");
 
 var accumulate = require("./accumulate");
 var forEachAccumulated = require("./forEachAccumulated");
 var invariant = require("./invariant");
+var isEventSupported = require("./isEventSupported");
+
+/**
+ * Internal store for event listeners
+ */
+var listenerBank = {};
 
 /**
  * Internal queue of events that have accumulated their dispatches and are
@@ -2310,6 +2279,21 @@ var executeDispatchesAndRelease = function(event) {
     }
   }
 };
+
+/**
+ * - `InstanceHandle`: [required] Module that performs logical traversals of DOM
+ *   hierarchy given ids of the logical DOM elements involved.
+ */
+var InstanceHandle = null;
+
+function validateInstanceHandle() {
+  var invalid = !InstanceHandle||
+    !InstanceHandle.traverseTwoPhase ||
+    !InstanceHandle.traverseEnterLeave;
+  if (invalid) {
+    throw new Error('InstanceHandle not injected before use!');
+  }
+}
 
 /**
  * This is a unified interface for event plugins to be installed and configured.
@@ -2341,10 +2325,28 @@ var EventPluginHub = {
   injection: {
 
     /**
+     * @param {object} InjectedMount
+     * @public
+     */
+    injectMount: EventPluginUtils.injection.injectMount,
+
+    /**
      * @param {object} InjectedInstanceHandle
      * @public
      */
-    injectInstanceHandle: EventPropagators.injection.injectInstanceHandle,
+    injectInstanceHandle: function(InjectedInstanceHandle) {
+      InstanceHandle = InjectedInstanceHandle;
+      if ("production" !== "development") {
+        validateInstanceHandle();
+      }
+    },
+
+    getInstanceHandle: function() {
+      if ("production" !== "development") {
+        validateInstanceHandle();
+      }
+      return InstanceHandle;
+    },
 
     /**
      * @param {array} InjectedEventPluginOrder
@@ -2359,15 +2361,62 @@ var EventPluginHub = {
 
   },
 
-  registrationNames: EventPluginRegistry.registrationNames,
+  registrationNameModules: EventPluginRegistry.registrationNameModules,
 
-  putListener: CallbackRegistry.putListener,
+  /**
+   * Stores `listener` at `listenerBank[registrationName][id]`. Is idempotent.
+   *
+   * @param {string} id ID of the DOM element.
+   * @param {string} registrationName Name of listener (e.g. `onClick`).
+   * @param {?function} listener The callback to store.
+   */
+  putListener: function(id, registrationName, listener) {
+    if ("production" !== "development") {
+      // IE8 has no API for event capturing and the `onScroll` event doesn't
+      // bubble.
+      if (registrationName === 'onScroll' &&
+          !isEventSupported('scroll', true)) {
+        console.warn('This browser doesn\'t support the `onScroll` event');
+      }
+    }
+    var bankForRegistrationName =
+      listenerBank[registrationName] || (listenerBank[registrationName] = {});
+    bankForRegistrationName[id] = listener;
+  },
 
-  getListener: CallbackRegistry.getListener,
+  /**
+   * @param {string} id ID of the DOM element.
+   * @param {string} registrationName Name of listener (e.g. `onClick`).
+   * @return {?function} The stored callback.
+   */
+  getListener: function(id, registrationName) {
+    var bankForRegistrationName = listenerBank[registrationName];
+    return bankForRegistrationName && bankForRegistrationName[id];
+  },
 
-  deleteListener: CallbackRegistry.deleteListener,
+  /**
+   * Deletes a listener from the registration bank.
+   *
+   * @param {string} id ID of the DOM element.
+   * @param {string} registrationName Name of listener (e.g. `onClick`).
+   */
+  deleteListener: function(id, registrationName) {
+    var bankForRegistrationName = listenerBank[registrationName];
+    if (bankForRegistrationName) {
+      delete bankForRegistrationName[id];
+    }
+  },
 
-  deleteAllListeners: CallbackRegistry.deleteAllListeners,
+  /**
+   * Deletes all listeners for the DOM element with the supplied ID.
+   *
+   * @param {string} id ID of the DOM element.
+   */
+  deleteAllListeners: function(id) {
+    for (var registrationName in listenerBank) {
+      delete listenerBank[registrationName][id];
+    }
+  },
 
   /**
    * Allows registered plugins an opportunity to extract events from top-level
@@ -2434,17 +2483,20 @@ var EventPluginHub = {
       'processEventQueue(): Additional events were enqueued while processing ' +
       'an event queue. Support for this has not yet been implemented.'
     ) : invariant(!eventQueue));
+  },
+
+  /**
+   * This is needed for tests only. Do not use!
+   */
+  __purge: function() {
+    listenerBank = {};
   }
 
 };
 
-if (ExecutionEnvironment.canUseDOM) {
-  window.EventPluginHub = EventPluginHub;
-}
-
 module.exports = EventPluginHub;
 
-},{"./CallbackRegistry":5,"./EventPluginRegistry":19,"./EventPluginUtils":20,"./EventPropagators":21,"./ExecutionEnvironment":22,"./accumulate":83,"./forEachAccumulated":96,"./invariant":106}],19:[function(require,module,exports){
+},{"./EventPluginRegistry":17,"./EventPluginUtils":18,"./accumulate":82,"./forEachAccumulated":94,"./invariant":104,"./isEventSupported":105}],17:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2510,11 +2562,11 @@ function recomputePluginOrdering() {
     var publishedEvents = PluginModule.eventTypes;
     for (var eventName in publishedEvents) {
       ("production" !== "development" ? invariant(
-        publishEventForPlugin(publishedEvents[eventName], PluginModule),
+        publishEventForPlugin(publishedEvents[eventName], PluginModule, eventName),
         'EventPluginRegistry: Failed to publish event `%s` for plugin `%s`.',
         eventName,
         pluginName
-      ) : invariant(publishEventForPlugin(publishedEvents[eventName], PluginModule)));
+      ) : invariant(publishEventForPlugin(publishedEvents[eventName], PluginModule, eventName)));
     }
   }
 }
@@ -2527,18 +2579,18 @@ function recomputePluginOrdering() {
  * @return {boolean} True if the event was successfully published.
  * @private
  */
-function publishEventForPlugin(dispatchConfig, PluginModule) {
+function publishEventForPlugin(dispatchConfig, PluginModule, eventName) {
   var phasedRegistrationNames = dispatchConfig.phasedRegistrationNames;
   if (phasedRegistrationNames) {
     for (var phaseName in phasedRegistrationNames) {
       if (phasedRegistrationNames.hasOwnProperty(phaseName)) {
         var phasedRegistrationName = phasedRegistrationNames[phaseName];
-        publishRegistrationName(phasedRegistrationName, PluginModule);
+        publishRegistrationName(phasedRegistrationName, PluginModule, eventName);
       }
     }
     return true;
   } else if (dispatchConfig.registrationName) {
-    publishRegistrationName(dispatchConfig.registrationName, PluginModule);
+    publishRegistrationName(dispatchConfig.registrationName, PluginModule, eventName);
     return true;
   }
   return false;
@@ -2552,14 +2604,16 @@ function publishEventForPlugin(dispatchConfig, PluginModule) {
  * @param {object} PluginModule Plugin publishing the event.
  * @private
  */
-function publishRegistrationName(registrationName, PluginModule) {
+function publishRegistrationName(registrationName, PluginModule, eventName) {
   ("production" !== "development" ? invariant(
-    !EventPluginRegistry.registrationNames[registrationName],
+    !EventPluginRegistry.registrationNameModules[registrationName],
     'EventPluginHub: More than one plugin attempted to publish the same ' +
     'registration name, `%s`.',
     registrationName
-  ) : invariant(!EventPluginRegistry.registrationNames[registrationName]));
-  EventPluginRegistry.registrationNames[registrationName] = PluginModule;
+  ) : invariant(!EventPluginRegistry.registrationNameModules[registrationName]));
+  EventPluginRegistry.registrationNameModules[registrationName] = PluginModule;
+  EventPluginRegistry.registrationNameDependencies[registrationName] =
+    PluginModule.eventTypes[eventName].dependencies;
 }
 
 /**
@@ -2577,7 +2631,12 @@ var EventPluginRegistry = {
   /**
    * Mapping from registration names to plugin modules.
    */
-  registrationNames: {},
+  registrationNameModules: {},
+
+  /**
+   * Mapping from registration name to event name
+   */
+  registrationNameDependencies: {},
 
   /**
    * Injects an ordering of plugins (by plugin name). This allows the ordering
@@ -2641,7 +2700,7 @@ var EventPluginRegistry = {
   getPluginModuleForEvent: function(event) {
     var dispatchConfig = event.dispatchConfig;
     if (dispatchConfig.registrationName) {
-      return EventPluginRegistry.registrationNames[
+      return EventPluginRegistry.registrationNameModules[
         dispatchConfig.registrationName
       ] || null;
     }
@@ -2649,7 +2708,7 @@ var EventPluginRegistry = {
       if (!dispatchConfig.phasedRegistrationNames.hasOwnProperty(phase)) {
         continue;
       }
-      var PluginModule = EventPluginRegistry.registrationNames[
+      var PluginModule = EventPluginRegistry.registrationNameModules[
         dispatchConfig.phasedRegistrationNames[phase]
       ];
       if (PluginModule) {
@@ -2671,10 +2730,10 @@ var EventPluginRegistry = {
       }
     }
     EventPluginRegistry.plugins.length = 0;
-    var registrationNames = EventPluginRegistry.registrationNames;
-    for (var registrationName in registrationNames) {
-      if (registrationNames.hasOwnProperty(registrationName)) {
-        delete registrationNames[registrationName];
+    var registrationNameModules = EventPluginRegistry.registrationNameModules;
+    for (var registrationName in registrationNameModules) {
+      if (registrationNameModules.hasOwnProperty(registrationName)) {
+        delete registrationNameModules[registrationName];
       }
     }
   }
@@ -2683,7 +2742,7 @@ var EventPluginRegistry = {
 
 module.exports = EventPluginRegistry;
 
-},{"./invariant":106}],20:[function(require,module,exports){
+},{"./invariant":104}],18:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2708,6 +2767,28 @@ var EventConstants = require("./EventConstants");
 
 var invariant = require("./invariant");
 
+/**
+ * Injected dependencies:
+ */
+
+/**
+ * - `Mount`: [required] Module that can convert between React dom IDs and
+ *   actual node references.
+ */
+var injection = {
+  Mount: null,
+  injectMount: function(InjectedMount) {
+    injection.Mount = InjectedMount;
+    if ("production" !== "development") {
+      ("production" !== "development" ? invariant(
+        InjectedMount && InjectedMount.getNode,
+        'EventPluginUtils.injection.injectMount(...): Injected Mount module ' +
+        'is missing getNode.'
+      ) : invariant(InjectedMount && InjectedMount.getNode));
+    }
+  }
+};
+
 var topLevelTypes = EventConstants.topLevelTypes;
 
 function isEndish(topLevelType) {
@@ -2724,6 +2805,7 @@ function isStartish(topLevelType) {
   return topLevelType === topLevelTypes.topMouseDown ||
          topLevelType === topLevelTypes.topTouchStart;
 }
+
 
 var validateEventDispatches;
 if ("production" !== "development") {
@@ -2776,7 +2858,10 @@ function forEachEventDispatch(event, cb) {
  * @param {string} domID DOM id to pass to the callback.
  */
 function executeDispatch(event, listener, domID) {
-  listener(event, domID);
+  event.currentTarget = injection.Mount.getNode(domID);
+  var returnValue = listener(event, domID);
+  event.currentTarget = null;
+  return returnValue;
 }
 
 /**
@@ -2861,16 +2946,19 @@ var EventPluginUtils = {
   isEndish: isEndish,
   isMoveish: isMoveish,
   isStartish: isStartish,
+
+  executeDirectDispatch: executeDirectDispatch,
+  executeDispatch: executeDispatch,
   executeDispatchesInOrder: executeDispatchesInOrder,
   executeDispatchesInOrderStopAtTrue: executeDispatchesInOrderStopAtTrue,
-  executeDirectDispatch: executeDirectDispatch,
   hasDispatches: hasDispatches,
-  executeDispatch: executeDispatch
+  injection: injection,
+  useTouchEvents: false
 };
 
 module.exports = EventPluginUtils;
 
-},{"./EventConstants":16,"./invariant":106}],21:[function(require,module,exports){
+},{"./EventConstants":14,"./invariant":104}],19:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -2891,39 +2979,14 @@ module.exports = EventPluginUtils;
 
 "use strict";
 
-var CallbackRegistry = require("./CallbackRegistry");
 var EventConstants = require("./EventConstants");
+var EventPluginHub = require("./EventPluginHub");
 
 var accumulate = require("./accumulate");
 var forEachAccumulated = require("./forEachAccumulated");
-var getListener = CallbackRegistry.getListener;
+
 var PropagationPhases = EventConstants.PropagationPhases;
-
-/**
- * Injected dependencies:
- */
-
-/**
- * - `InstanceHandle`: [required] Module that performs logical traversals of DOM
- *   hierarchy given ids of the logical DOM elements involved.
- */
-var injection = {
-  InstanceHandle: null,
-  injectInstanceHandle: function(InjectedInstanceHandle) {
-    injection.InstanceHandle = InjectedInstanceHandle;
-    if ("production" !== "development") {
-      injection.validate();
-    }
-  },
-  validate: function() {
-    var invalid = !injection.InstanceHandle||
-      !injection.InstanceHandle.traverseTwoPhase ||
-      !injection.InstanceHandle.traverseEnterLeave;
-    if (invalid) {
-      throw new Error('InstanceHandle not injected before use!');
-    }
-  }
-};
+var getListener = EventPluginHub.getListener;
 
 /**
  * Some event types have a notion of different registration names for different
@@ -2946,7 +3009,6 @@ function accumulateDirectionalDispatches(domID, upwards, event) {
     if (!domID) {
       throw new Error('Dispatching id must not be null');
     }
-    injection.validate();
   }
   var phase = upwards ? PropagationPhases.bubbled : PropagationPhases.captured;
   var listener = listenerAtPhase(domID, event, phase);
@@ -2965,7 +3027,7 @@ function accumulateDirectionalDispatches(domID, upwards, event) {
  */
 function accumulateTwoPhaseDispatchesSingle(event) {
   if (event && event.dispatchConfig.phasedRegistrationNames) {
-    injection.InstanceHandle.traverseTwoPhase(
+    EventPluginHub.injection.getInstanceHandle().traverseTwoPhase(
       event.dispatchMarker,
       accumulateDirectionalDispatches,
       event
@@ -3002,17 +3064,11 @@ function accumulateDirectDispatchesSingle(event) {
 }
 
 function accumulateTwoPhaseDispatches(events) {
-  if ("production" !== "development") {
-    injection.validate();
-  }
   forEachAccumulated(events, accumulateTwoPhaseDispatchesSingle);
 }
 
 function accumulateEnterLeaveDispatches(leave, enter, fromID, toID) {
-  if ("production" !== "development") {
-    injection.validate();
-  }
-  injection.InstanceHandle.traverseEnterLeave(
+  EventPluginHub.injection.getInstanceHandle().traverseEnterLeave(
     fromID,
     toID,
     accumulateDispatches,
@@ -3023,9 +3079,6 @@ function accumulateEnterLeaveDispatches(leave, enter, fromID, toID) {
 
 
 function accumulateDirectDispatches(events) {
-  if ("production" !== "development") {
-    injection.validate();
-  }
   forEachAccumulated(events, accumulateDirectDispatchesSingle);
 }
 
@@ -3045,13 +3098,12 @@ function accumulateDirectDispatches(events) {
 var EventPropagators = {
   accumulateTwoPhaseDispatches: accumulateTwoPhaseDispatches,
   accumulateDirectDispatches: accumulateDirectDispatches,
-  accumulateEnterLeaveDispatches: accumulateEnterLeaveDispatches,
-  injection: injection
+  accumulateEnterLeaveDispatches: accumulateEnterLeaveDispatches
 };
 
 module.exports = EventPropagators;
 
-},{"./CallbackRegistry":5,"./EventConstants":16,"./accumulate":83,"./forEachAccumulated":96}],22:[function(require,module,exports){
+},{"./EventConstants":14,"./EventPluginHub":16,"./accumulate":82,"./forEachAccumulated":94}],20:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3094,7 +3146,7 @@ var ExecutionEnvironment = {
 
 module.exports = ExecutionEnvironment;
 
-},{}],23:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3118,11 +3170,36 @@ module.exports = ExecutionEnvironment;
 
 var invariant = require("./invariant");
 
+var hasReadOnlyValue = {
+  'checkbox': true,
+  'hidden': true,
+  'radio': true
+};
+
 /**
  * Provide a linked `value` attribute for controlled forms. You should not use
  * this outside of the ReactDOM controlled form components.
  */
 var LinkedValueMixin = {
+  propTypes: {
+    value: function(props, propName, componentName) {
+      if ("production" !== "development") {
+        if (props[propName] &&
+            !hasReadOnlyValue[props.type] &&
+            !props.onChange &&
+            !props.readOnly &&
+            !props.disabled) {
+          console.warn(
+            'You provided a `value` prop to a form field without an ' +
+            '`onChange` handler. This will render a read-only field. If ' +
+            'the field should be mutable use `defaultValue`. Otherwise, set ' +
+            'either `onChange` or `readOnly`.'
+          );
+        }
+      }
+    }
+  },
+
   _assertLink: function() {
     ("production" !== "development" ? invariant(
       this.props.value == null && this.props.onChange == null,
@@ -3164,7 +3241,7 @@ var LinkedValueMixin = {
 
 module.exports = LinkedValueMixin;
 
-},{"./invariant":106}],24:[function(require,module,exports){
+},{"./invariant":104}],22:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3229,7 +3306,7 @@ var MobileSafariClickEventPlugin = {
 
 module.exports = MobileSafariClickEventPlugin;
 
-},{"./EventConstants":16,"./emptyFunction":91}],25:[function(require,module,exports){
+},{"./EventConstants":14,"./emptyFunction":91}],23:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3344,7 +3421,7 @@ var PooledClass = {
 
 module.exports = PooledClass;
 
-},{}],26:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3366,6 +3443,7 @@ module.exports = PooledClass;
 "use strict";
 
 var DOMPropertyOperations = require("./DOMPropertyOperations");
+var EventPluginUtils = require("./EventPluginUtils");
 var ReactComponent = require("./ReactComponent");
 var ReactCompositeComponent = require("./ReactCompositeComponent");
 var ReactContext = require("./ReactContext");
@@ -3387,7 +3465,7 @@ var React = {
   DOM: ReactDOM,
   PropTypes: ReactPropTypes,
   initializeTouchEvents: function(shouldUseTouch) {
-    ReactMount.useTouchEvents = shouldUseTouch;
+    EventPluginUtils.useTouchEvents = shouldUseTouch;
   },
   createClass: ReactCompositeComponent.createClass,
   constructAndRenderComponent: ReactMount.constructAndRenderComponent,
@@ -3414,13 +3492,25 @@ var React = {
   }
 };
 
+if ("production" !== "development") {
+  var ExecutionEnvironment = require("./ExecutionEnvironment");
+  if (ExecutionEnvironment.canUseDOM &&
+      window.top === window.self &&
+      navigator.userAgent.indexOf('Chrome') > -1) {
+    console.debug(
+      'Download the React DevTools for a better development experience: ' +
+      'http://fb.me/react-devtools'
+    );
+  }
+}
+
 // Version exists only in the open-source version of React, not in Facebook's
 // internal version.
 React.version = '0.9.0-alpha';
 
 module.exports = React;
 
-},{"./DOMPropertyOperations":11,"./ReactComponent":27,"./ReactCompositeComponent":30,"./ReactContext":31,"./ReactCurrentOwner":32,"./ReactDOM":33,"./ReactDOMComponent":35,"./ReactDefaultInjection":44,"./ReactInstanceHandles":51,"./ReactMount":53,"./ReactMultiChild":55,"./ReactPerf":58,"./ReactPropTypes":62,"./ReactServerRendering":65,"./ReactTextComponent":66}],27:[function(require,module,exports){
+},{"./DOMPropertyOperations":9,"./EventPluginUtils":18,"./ExecutionEnvironment":20,"./ReactComponent":25,"./ReactCompositeComponent":28,"./ReactContext":29,"./ReactCurrentOwner":30,"./ReactDOM":31,"./ReactDOMComponent":33,"./ReactDefaultInjection":43,"./ReactInstanceHandles":50,"./ReactMount":52,"./ReactMultiChild":54,"./ReactPerf":57,"./ReactPropTypes":61,"./ReactServerRendering":64,"./ReactTextComponent":65}],25:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3513,6 +3603,7 @@ function validateExplicitKey(component) {
     message += ' It was passed a child from ' + childOwnerName + '.';
   }
 
+  message += ' See http://fb.me/react-warning-keys for more information.';
   console.warn(message);
 }
 
@@ -3743,7 +3834,9 @@ var ReactComponent = {
     mountComponent: function(rootID, transaction, mountDepth) {
       ("production" !== "development" ? invariant(
         !this.isMounted(),
-        'mountComponent(%s, ...): Can only mount an unmounted component.',
+        'mountComponent(%s, ...): Can only mount an unmounted component. ' +
+        'Make sure to avoid storing components between renders or reusing a ' +
+        'single component instance in multiple places.',
         rootID
       ) : invariant(!this.isMounted()));
       var props = this.props;
@@ -3928,7 +4021,7 @@ var ReactComponent = {
 
 module.exports = ReactComponent;
 
-},{"./ReactComponentEnvironment":29,"./ReactCurrentOwner":32,"./ReactOwner":57,"./ReactUpdates":67,"./invariant":106,"./keyMirror":112,"./merge":115}],28:[function(require,module,exports){
+},{"./ReactComponentEnvironment":27,"./ReactCurrentOwner":30,"./ReactOwner":56,"./ReactUpdates":66,"./invariant":104,"./keyMirror":110,"./merge":113}],26:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -3958,7 +4051,6 @@ var ReactReconcileTransaction = require("./ReactReconcileTransaction");
 
 var getReactRootElementInContainer = require("./getReactRootElementInContainer");
 var invariant = require("./invariant");
-var mutateHTMLNodeWithMarkup = require("./mutateHTMLNodeWithMarkup");
 
 
 var ELEMENT_NODE_TYPE = 1;
@@ -4015,19 +4107,32 @@ var ReactComponentBrowserEnvironment = {
     ("production" !== "development" ? invariant(
       container && (
         container.nodeType === ELEMENT_NODE_TYPE ||
-        container.nodeType === DOC_NODE_TYPE && ReactMount.allowFullPageRender
+        container.nodeType === DOC_NODE_TYPE
       ),
       'mountComponentIntoNode(...): Target container is not valid.'
     ) : invariant(container && (
       container.nodeType === ELEMENT_NODE_TYPE ||
-      container.nodeType === DOC_NODE_TYPE && ReactMount.allowFullPageRender
+      container.nodeType === DOC_NODE_TYPE
     )));
+
     if (shouldReuseMarkup) {
       if (ReactMarkupChecksum.canReuseMarkup(
             markup,
             getReactRootElementInContainer(container))) {
         return;
       } else {
+        ("production" !== "development" ? invariant(
+          container.nodeType !== DOC_NODE_TYPE,
+          'You\'re trying to render a component to the document using ' +
+          'server rendering but the checksum was invalid. This usually ' +
+          'means you rendered a different component type or props on ' +
+          'the client from the one on the server, or your render() methods ' +
+          'are impure. React cannot handle this case due to cross-browser ' +
+          'quirks by rendering at the document root. You should look for ' +
+          'environment dependent code in your components and ensure ' +
+          'the props are the same client and server side.'
+        ) : invariant(container.nodeType !== DOC_NODE_TYPE));
+
         if ("production" !== "development") {
           console.warn(
             'React attempted to use reuse markup in a container but the ' +
@@ -4042,13 +4147,13 @@ var ReactComponentBrowserEnvironment = {
       }
     }
 
-    // You can't naively set the innerHTML of the entire document. You need
-    // to mutate documentElement which requires doing some crazy tricks. See
-    // mutateHTMLNodeWithMarkup()
-    if (container.nodeType === DOC_NODE_TYPE) {
-      mutateHTMLNodeWithMarkup(container.documentElement, markup);
-      return;
-    }
+    ("production" !== "development" ? invariant(
+      container.nodeType !== DOC_NODE_TYPE,
+      'You\'re trying to render a component to the document but ' +
+      'you didn\'t use server rendering. We can\'t do this ' +
+      'without using server rendering due to cross-browser quirks. ' +
+      'See renderComponentToString() for server rendering.'
+    ) : invariant(container.nodeType !== DOC_NODE_TYPE));
 
     // Asynchronously inject markup by ensuring that the container is not in
     // the document when settings its `innerHTML`.
@@ -4070,7 +4175,7 @@ var ReactComponentBrowserEnvironment = {
 
 module.exports = ReactComponentBrowserEnvironment;
 
-},{"./ReactDOMIDOperations":37,"./ReactMarkupChecksum":52,"./ReactMount":53,"./ReactReconcileTransaction":63,"./getReactRootElementInContainer":102,"./invariant":106,"./mutateHTMLNodeWithMarkup":119}],29:[function(require,module,exports){
+},{"./ReactDOMIDOperations":35,"./ReactMarkupChecksum":51,"./ReactMount":52,"./ReactReconcileTransaction":62,"./getReactRootElementInContainer":100,"./invariant":104}],27:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -4096,7 +4201,7 @@ var ReactComponentEnvironment = ReactComponentBrowserEnvironment;
 
 module.exports = ReactComponentEnvironment;
 
-},{"./ReactComponentBrowserEnvironment":28}],30:[function(require,module,exports){
+},{"./ReactComponentBrowserEnvironment":26}],28:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -4531,6 +4636,17 @@ function validateLifeCycleOnReplaceState(instance) {
  * specification keys when building `ReactCompositeComponent` classses.
  */
 function mixSpecIntoComponent(ConvenienceConstructor, spec) {
+  ("production" !== "development" ? invariant(
+    !isValidClass(spec),
+    'ReactCompositeComponent: You\'re attempting to ' +
+    'use a component class as a mixin. Instead, just use a regular object.'
+  ) : invariant(!isValidClass(spec)));
+  ("production" !== "development" ? invariant(
+    !ReactComponent.isValidComponent(spec),
+    'ReactCompositeComponent: You\'re attempting to ' +
+    'use a component as a mixin. Instead, just use a regular object.'
+  ) : invariant(!ReactComponent.isValidComponent(spec)));
+
   var Constructor = ConvenienceConstructor.componentConstructor;
   var proto = Constructor.prototype;
   for (var name in spec) {
@@ -4648,10 +4764,14 @@ function mergeObjectsWithNoDuplicateKeys(one, two) {
  */
 function createMergedResultFunction(one, two) {
   return function mergedResult() {
-    return mergeObjectsWithNoDuplicateKeys(
-      one.apply(this, arguments),
-      two.apply(this, arguments)
-    );
+    var a = one.apply(this, arguments);
+    var b = two.apply(this, arguments);
+    if (a == null) {
+      return b;
+    } else if (b == null) {
+      return a;
+    }
+    return mergeObjectsWithNoDuplicateKeys(a, b);
   };
 }
 
@@ -4780,7 +4900,7 @@ var ReactCompositeComponentMixin = {
       this._compositeLifeCycleState = CompositeLifeCycle.MOUNTING;
 
       this._defaultProps = this.getDefaultProps ? this.getDefaultProps() : null;
-      this._processProps(this.props);
+      this.props = this._processProps(this.props);
 
       if (this.__reactAutoBindMap) {
         this._bindAutoBindMethods();
@@ -4837,9 +4957,10 @@ var ReactCompositeComponentMixin = {
 
     this._defaultProps = null;
 
-    ReactComponent.Mixin.unmountComponent.call(this);
     this._renderedComponent.unmountComponent();
     this._renderedComponent = null;
+
+    ReactComponent.Mixin.unmountComponent.call(this);
 
     if (this.refs) {
       this.refs = null;
@@ -4869,6 +4990,18 @@ var ReactCompositeComponentMixin = {
    * @protected
    */
   setState: function(partialState, callback) {
+    ("production" !== "development" ? invariant(
+      typeof partialState === 'object' || partialState == null,
+      'setState(...): takes an object of state variables to update.'
+    ) : invariant(typeof partialState === 'object' || partialState == null));
+    if ("production" !== "development") {
+      if (partialState == null) {
+        console.warn(
+          'setState(...): You passed an undefined or null state object; ' +
+          'instead, use forceUpdate().'
+        );
+      }
+    }
     // Merge with `_pendingState` if it exists, otherwise with existing state.
     this.replaceState(
       merge(this._pendingState || this.state, partialState),
@@ -4954,12 +5087,15 @@ var ReactCompositeComponentMixin = {
 
   /**
    * Processes props by setting default values for unspecified props and
-   * asserting that the props are valid.
+   * asserting that the props are valid. Does not mutate its argument; returns
+   * a new props object with defaults merged in.
    *
-   * @param {object} props
+   * @param {object} newProps
+   * @return {object}
    * @private
    */
-  _processProps: function(props) {
+  _processProps: function(newProps) {
+    var props = merge(newProps);
     var defaultProps = this._defaultProps;
     for (var propName in defaultProps) {
       if (typeof props[propName] === 'undefined') {
@@ -4970,6 +5106,7 @@ var ReactCompositeComponentMixin = {
     if (propTypes) {
       this._checkPropTypes(propTypes, props, ReactPropTypeLocations.prop);
     }
+    return props;
   },
 
   /**
@@ -5021,8 +5158,7 @@ var ReactCompositeComponentMixin = {
 
     var nextProps = this.props;
     if (this._pendingProps != null) {
-      nextProps = this._pendingProps;
-      this._processProps(nextProps);
+      nextProps = this._processProps(this._pendingProps);
       this._pendingProps = null;
 
       this._compositeLifeCycleState = CompositeLifeCycle.RECEIVING_PROPS;
@@ -5042,30 +5178,34 @@ var ReactCompositeComponentMixin = {
     var nextState = this._pendingState || this.state;
     this._pendingState = null;
 
-    if (this._pendingForceUpdate ||
-        !this.shouldComponentUpdate ||
-        this.shouldComponentUpdate(nextProps, nextState, nextContext)) {
-      this._pendingForceUpdate = false;
-      // Will set `this.props`, `this.state` and `this.context`.
-      this._performComponentUpdate(
-        nextProps,
-        nextOwner,
-        nextState,
-        nextFullContext,
-        nextContext,
-        transaction
-      );
-    } else {
-      // If it's determined that a component should not update, we still want
-      // to set props and state.
-      this.props = nextProps;
-      this._owner = nextOwner;
-      this.state = nextState;
-      this._currentContext = nextFullContext;
-      this.context = nextContext;
+    try {
+      if (this._pendingForceUpdate ||
+          !this.shouldComponentUpdate ||
+          this.shouldComponentUpdate(nextProps, nextState, nextContext)) {
+        this._pendingForceUpdate = false;
+        // Will set `this.props`, `this.state` and `this.context`.
+        this._performComponentUpdate(
+          nextProps,
+          nextOwner,
+          nextState,
+          nextFullContext,
+          nextContext,
+          transaction
+        );
+      } else {
+        // If it's determined that a component should not update, we still want
+        // to set props and state.
+        this.props = nextProps;
+        this._owner = nextOwner;
+        this.state = nextState;
+        this._currentContext = nextFullContext;
+        this.context = nextContext;
+      }
+    } catch (e) {
+      throw e;
+    } finally {
+      this._compositeLifeCycleState = null;
     }
-
-    this._compositeLifeCycleState = null;
   },
 
   /**
@@ -5303,6 +5443,18 @@ mixInto(ReactCompositeComponentBase, ReactPropTransferer.Mixin);
 mixInto(ReactCompositeComponentBase, ReactCompositeComponentMixin);
 
 /**
+ * Checks if a value is a valid component constructor.
+ *
+ * @param {*}
+ * @return {boolean}
+ * @public
+ */
+function isValidClass(componentClass) {
+  return componentClass instanceof Function &&
+         'componentConstructor' in componentClass &&
+         componentClass.componentConstructor instanceof Function;
+}
+/**
  * Module for creating composite components.
  *
  * @class ReactCompositeComponent
@@ -5334,6 +5486,7 @@ var ReactCompositeComponent = {
       return instance;
     };
     ConvenienceConstructor.componentConstructor = Constructor;
+    Constructor.ConvenienceConstructor = ConvenienceConstructor;
     ConvenienceConstructor.originalSpec = spec;
 
     mixSpecIntoComponent(ConvenienceConstructor, spec);
@@ -5364,23 +5517,12 @@ var ReactCompositeComponent = {
     return ConvenienceConstructor;
   },
 
-  /**
-   * Checks if a value is a valid component constructor.
-   *
-   * @param {*}
-   * @return {boolean}
-   * @public
-   */
-  isValidClass: function(componentClass) {
-    return componentClass instanceof Function &&
-           'componentConstructor' in componentClass &&
-           componentClass.componentConstructor instanceof Function;
-  }
+  isValidClass: isValidClass
 };
 
 module.exports = ReactCompositeComponent;
 
-},{"./ReactComponent":27,"./ReactContext":31,"./ReactCurrentOwner":32,"./ReactErrorUtils":46,"./ReactOwner":57,"./ReactPerf":58,"./ReactPropTransferer":59,"./ReactPropTypeLocationNames":60,"./ReactPropTypeLocations":61,"./ReactUpdates":67,"./invariant":106,"./keyMirror":112,"./merge":115,"./mixInto":118,"./objMap":120,"./shouldUpdateReactComponent":124}],31:[function(require,module,exports){
+},{"./ReactComponent":25,"./ReactContext":29,"./ReactCurrentOwner":30,"./ReactErrorUtils":45,"./ReactOwner":56,"./ReactPerf":57,"./ReactPropTransferer":58,"./ReactPropTypeLocationNames":59,"./ReactPropTypeLocations":60,"./ReactUpdates":66,"./invariant":104,"./keyMirror":110,"./merge":113,"./mixInto":116,"./objMap":117,"./shouldUpdateReactComponent":121}],29:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -5452,7 +5594,7 @@ var ReactContext = {
 
 module.exports = ReactContext;
 
-},{"./merge":115}],32:[function(require,module,exports){
+},{"./merge":113}],30:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -5493,7 +5635,7 @@ var ReactCurrentOwner = {
 
 module.exports = ReactCurrentOwner;
 
-},{}],33:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -5672,12 +5814,16 @@ var ReactDOM = objMapKeyVal({
 
   // SVG
   circle: false,
+  defs: false,
   g: false,
   line: false,
+  linearGradient: false,
   path: false,
   polygon: false,
   polyline: false,
+  radialGradient: false,
   rect: false,
+  stop: false,
   svg: false,
   text: false
 }, createDOMComponentClass);
@@ -5692,7 +5838,7 @@ ReactDOM.injection = injection;
 
 module.exports = ReactDOM;
 
-},{"./ReactDOMComponent":35,"./mergeInto":117,"./objMapKeyVal":121}],34:[function(require,module,exports){
+},{"./ReactDOMComponent":33,"./mergeInto":115,"./objMapKeyVal":118}],32:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -5762,7 +5908,7 @@ var ReactDOMButton = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMButton;
 
-},{"./AutoFocusMixin":2,"./ReactCompositeComponent":30,"./ReactDOM":33,"./keyMirror":112}],35:[function(require,module,exports){
+},{"./AutoFocusMixin":1,"./ReactCompositeComponent":28,"./ReactDOM":31,"./keyMirror":110}],33:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -5789,6 +5935,7 @@ var DOMProperty = require("./DOMProperty");
 var DOMPropertyOperations = require("./DOMPropertyOperations");
 var ReactComponent = require("./ReactComponent");
 var ReactEventEmitter = require("./ReactEventEmitter");
+var ReactMount = require("./ReactMount");
 var ReactMultiChild = require("./ReactMultiChild");
 var ReactPerf = require("./ReactPerf");
 
@@ -5798,14 +5945,16 @@ var keyOf = require("./keyOf");
 var merge = require("./merge");
 var mixInto = require("./mixInto");
 
-var putListener = ReactEventEmitter.putListener;
 var deleteListener = ReactEventEmitter.deleteListener;
-var registrationNames = ReactEventEmitter.registrationNames;
+var listenTo = ReactEventEmitter.listenTo;
+var registrationNameModules = ReactEventEmitter.registrationNameModules;
 
 // For quickly matching children type, to test if can be treated as content.
 var CONTENT_TYPES = {'string': true, 'number': true};
 
 var STYLE = keyOf({style: null});
+
+var ELEMENT_NODE_TYPE = 1;
 
 /**
  * @param {?object} props
@@ -5825,6 +5974,19 @@ function assertValidProps(props) {
     'not a string.'
   ) : invariant(props.style == null || typeof props.style === 'object'));
 }
+
+function putListener(id, registrationName, listener) {
+  var container = ReactMount.findReactContainerForID(id);
+  if (container) {
+    var doc = container.nodeType === ELEMENT_NODE_TYPE ?
+      container.ownerDocument :
+      container;
+    listenTo(registrationName, doc);
+  }
+
+  ReactEventEmitter.putListener(id, registrationName, listener);
+}
+
 
 /**
  * @constructor ReactDOMComponent
@@ -5891,7 +6053,7 @@ ReactDOMComponent.Mixin = {
       if (propValue == null) {
         continue;
       }
-      if (registrationNames[propKey]) {
+      if (registrationNameModules[propKey]) {
         putListener(this._rootNodeID, propKey, propValue);
       } else {
         if (propKey === STYLE) {
@@ -6008,7 +6170,7 @@ ReactDOMComponent.Mixin = {
             styleUpdates[styleName] = '';
           }
         }
-      } else if (registrationNames[propKey]) {
+      } else if (registrationNameModules[propKey]) {
         deleteListener(this._rootNodeID, propKey);
       } else if (
           DOMProperty.isStandardName[propKey] ||
@@ -6050,7 +6212,7 @@ ReactDOMComponent.Mixin = {
           // Relies on `updateStylesByID` not mutating `styleUpdates`.
           styleUpdates = nextProp;
         }
-      } else if (registrationNames[propKey]) {
+      } else if (registrationNameModules[propKey]) {
         putListener(this._rootNodeID, propKey, nextProp);
       } else if (
           DOMProperty.isStandardName[propKey] ||
@@ -6129,9 +6291,9 @@ ReactDOMComponent.Mixin = {
    * @internal
    */
   unmountComponent: function() {
+    this.unmountChildren();
     ReactEventEmitter.deleteAllListeners(this._rootNodeID);
     ReactComponent.Mixin.unmountComponent.call(this);
-    this.unmountChildren();
   }
 
 };
@@ -6142,7 +6304,7 @@ mixInto(ReactDOMComponent, ReactMultiChild.Mixin);
 
 module.exports = ReactDOMComponent;
 
-},{"./CSSPropertyOperations":4,"./DOMProperty":10,"./DOMPropertyOperations":11,"./ReactComponent":27,"./ReactEventEmitter":47,"./ReactMultiChild":55,"./ReactPerf":58,"./escapeTextForBrowser":92,"./invariant":106,"./keyOf":113,"./merge":115,"./mixInto":118}],36:[function(require,module,exports){
+},{"./CSSPropertyOperations":3,"./DOMProperty":8,"./DOMPropertyOperations":9,"./ReactComponent":25,"./ReactEventEmitter":46,"./ReactMount":52,"./ReactMultiChild":54,"./ReactPerf":57,"./escapeTextForBrowser":92,"./invariant":104,"./keyOf":111,"./merge":113,"./mixInto":116}],34:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -6198,7 +6360,7 @@ var ReactDOMForm = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMForm;
 
-},{"./EventConstants":16,"./ReactCompositeComponent":30,"./ReactDOM":33,"./ReactEventEmitter":47}],37:[function(require,module,exports){
+},{"./EventConstants":14,"./ReactCompositeComponent":28,"./ReactDOM":31,"./ReactEventEmitter":46}],35:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -6399,7 +6561,61 @@ var ReactDOMIDOperations = {
 
 module.exports = ReactDOMIDOperations;
 
-},{"./CSSPropertyOperations":4,"./DOMChildrenOperations":9,"./DOMPropertyOperations":11,"./ReactMount":53,"./getTextContentAccessor":103,"./invariant":106}],38:[function(require,module,exports){
+},{"./CSSPropertyOperations":3,"./DOMChildrenOperations":7,"./DOMPropertyOperations":9,"./ReactMount":52,"./getTextContentAccessor":101,"./invariant":104}],36:[function(require,module,exports){
+/**
+ * Copyright 2013 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @providesModule ReactDOMImg
+ */
+
+"use strict";
+
+var ReactCompositeComponent = require("./ReactCompositeComponent");
+var ReactDOM = require("./ReactDOM");
+var ReactEventEmitter = require("./ReactEventEmitter");
+var EventConstants = require("./EventConstants");
+
+// Store a reference to the <img> `ReactDOMComponent`.
+var img = ReactDOM.img;
+
+/**
+ * Since onLoad doesn't bubble OR capture on the top level in IE8, we need to
+ * capture it on the <img> element itself. There are lots of hacks we could do
+ * to accomplish this, but the most reliable is to make <img> a composite
+ * component and use `componentDidMount` to attach the event handlers.
+ */
+var ReactDOMImg = ReactCompositeComponent.createClass({
+  displayName: 'ReactDOMImg',
+  tagName: 'IMG',
+
+  render: function() {
+    return img(this.props);
+  },
+
+  componentDidMount: function() {
+    ReactEventEmitter.trapBubbledEvent(
+      EventConstants.topLevelTypes.topLoad,
+      'load',
+      this.getDOMNode()
+    );
+  }
+});
+
+module.exports = ReactDOMImg;
+
+},{"./EventConstants":14,"./ReactCompositeComponent":28,"./ReactDOM":31,"./ReactEventEmitter":46}],37:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -6574,7 +6790,7 @@ var ReactDOMInput = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMInput;
 
-},{"./AutoFocusMixin":2,"./DOMPropertyOperations":11,"./LinkedValueMixin":23,"./ReactCompositeComponent":30,"./ReactDOM":33,"./ReactMount":53,"./invariant":106,"./merge":115}],39:[function(require,module,exports){
+},{"./AutoFocusMixin":1,"./DOMPropertyOperations":9,"./LinkedValueMixin":21,"./ReactCompositeComponent":28,"./ReactDOM":31,"./ReactMount":52,"./invariant":104,"./merge":113}],38:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -6627,7 +6843,7 @@ var ReactDOMOption = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMOption;
 
-},{"./ReactCompositeComponent":30,"./ReactDOM":33}],40:[function(require,module,exports){
+},{"./ReactCompositeComponent":28,"./ReactDOM":31}],39:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -6800,7 +7016,7 @@ var ReactDOMSelect = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMSelect;
 
-},{"./AutoFocusMixin":2,"./LinkedValueMixin":23,"./ReactCompositeComponent":30,"./ReactDOM":33,"./invariant":106,"./merge":115}],41:[function(require,module,exports){
+},{"./AutoFocusMixin":1,"./LinkedValueMixin":21,"./ReactCompositeComponent":28,"./ReactDOM":31,"./invariant":104,"./merge":113}],40:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -6991,7 +7207,7 @@ var ReactDOMSelection = {
 
 module.exports = ReactDOMSelection;
 
-},{"./getNodeForCharacterOffset":101,"./getTextContentAccessor":103}],42:[function(require,module,exports){
+},{"./getNodeForCharacterOffset":99,"./getTextContentAccessor":101}],41:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -7133,7 +7349,7 @@ var ReactDOMTextarea = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMTextarea;
 
-},{"./AutoFocusMixin":2,"./DOMPropertyOperations":11,"./LinkedValueMixin":23,"./ReactCompositeComponent":30,"./ReactDOM":33,"./invariant":106,"./merge":115}],43:[function(require,module,exports){
+},{"./AutoFocusMixin":1,"./DOMPropertyOperations":9,"./LinkedValueMixin":21,"./ReactCompositeComponent":28,"./ReactDOM":31,"./invariant":104,"./merge":113}],42:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -7210,7 +7426,7 @@ var ReactDefaultBatchingStrategy = {
 
 module.exports = ReactDefaultBatchingStrategy;
 
-},{"./ReactUpdates":67,"./Transaction":81,"./emptyFunction":91,"./mixInto":118}],44:[function(require,module,exports){
+},{"./ReactUpdates":66,"./Transaction":80,"./emptyFunction":91,"./mixInto":116}],43:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -7236,12 +7452,14 @@ var ExecutionEnvironment = require("./ExecutionEnvironment");
 var ReactDOM = require("./ReactDOM");
 var ReactDOMButton = require("./ReactDOMButton");
 var ReactDOMForm = require("./ReactDOMForm");
+var ReactDOMImg = require("./ReactDOMImg");
 var ReactDOMInput = require("./ReactDOMInput");
 var ReactDOMOption = require("./ReactDOMOption");
 var ReactDOMSelect = require("./ReactDOMSelect");
 var ReactDOMTextarea = require("./ReactDOMTextarea");
 var ReactEventEmitter = require("./ReactEventEmitter");
 var ReactEventTopLevelCallback = require("./ReactEventTopLevelCallback");
+var ReactMount = require("./ReactMount");
 var ReactPerf = require("./ReactPerf");
 var ReactRootIndex = require("./ReactRootIndex");
 
@@ -7263,13 +7481,16 @@ var SimpleEventPlugin = require("./SimpleEventPlugin");
 var ReactDefaultBatchingStrategy = require("./ReactDefaultBatchingStrategy");
 var ReactUpdates = require("./ReactUpdates");
 
+var createFullPageComponent = require("./createFullPageComponent");
+
 function inject() {
   ReactEventEmitter.TopLevelCallbackCreator = ReactEventTopLevelCallback;
   /**
-   * Inject module for resolving DOM hierarchy and plugin ordering.
+   * Inject modules for resolving DOM hierarchy and plugin ordering.
    */
   EventPluginHub.injection.injectEventPluginOrder(DefaultEventPluginOrder);
   EventPluginHub.injection.injectInstanceHandle(ReactInstanceHandles);
+  EventPluginHub.injection.injectMount(ReactMount);
 
   /**
    * Some important event plugins included by default (without having to require
@@ -7287,10 +7508,16 @@ function inject() {
   ReactDOM.injection.injectComponentClasses({
     button: ReactDOMButton,
     form: ReactDOMForm,
+    img: ReactDOMImg,
     input: ReactDOMInput,
     option: ReactDOMOption,
     select: ReactDOMSelect,
-    textarea: ReactDOMTextarea
+    textarea: ReactDOMTextarea,
+
+    html: createFullPageComponent(ReactDOM.html),
+    head: createFullPageComponent(ReactDOM.head),
+    title: createFullPageComponent(ReactDOM.title),
+    body: createFullPageComponent(ReactDOM.body)
   });
 
   DOMProperty.injection.injectDOMPropertyConfig(DefaultDOMPropertyConfig);
@@ -7314,7 +7541,7 @@ module.exports = {
   inject: inject
 };
 
-},{"./ChangeEventPlugin":6,"./ClientReactRootIndex":7,"./CompositionEventPlugin":8,"./DOMProperty":10,"./DefaultDOMPropertyConfig":13,"./DefaultEventPluginOrder":14,"./EnterLeaveEventPlugin":15,"./EventPluginHub":18,"./ExecutionEnvironment":22,"./MobileSafariClickEventPlugin":24,"./ReactDOM":33,"./ReactDOMButton":34,"./ReactDOMForm":36,"./ReactDOMInput":38,"./ReactDOMOption":39,"./ReactDOMSelect":40,"./ReactDOMTextarea":42,"./ReactDefaultBatchingStrategy":43,"./ReactDefaultPerf":45,"./ReactEventEmitter":47,"./ReactEventTopLevelCallback":49,"./ReactInstanceHandles":51,"./ReactPerf":58,"./ReactRootIndex":64,"./ReactUpdates":67,"./SelectEventPlugin":68,"./ServerReactRootIndex":69,"./SimpleEventPlugin":70}],45:[function(require,module,exports){
+},{"./ChangeEventPlugin":4,"./ClientReactRootIndex":5,"./CompositionEventPlugin":6,"./DOMProperty":8,"./DefaultDOMPropertyConfig":11,"./DefaultEventPluginOrder":12,"./EnterLeaveEventPlugin":13,"./EventPluginHub":16,"./ExecutionEnvironment":20,"./MobileSafariClickEventPlugin":22,"./ReactDOM":31,"./ReactDOMButton":32,"./ReactDOMForm":34,"./ReactDOMImg":36,"./ReactDOMInput":37,"./ReactDOMOption":38,"./ReactDOMSelect":39,"./ReactDOMTextarea":41,"./ReactDefaultBatchingStrategy":42,"./ReactDefaultPerf":44,"./ReactEventEmitter":46,"./ReactEventTopLevelCallback":48,"./ReactInstanceHandles":50,"./ReactMount":52,"./ReactPerf":57,"./ReactRootIndex":63,"./ReactUpdates":66,"./SelectEventPlugin":67,"./ServerReactRootIndex":68,"./SimpleEventPlugin":69,"./createFullPageComponent":87}],44:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -7723,7 +7950,7 @@ if ("production" !== "development") {
 
 module.exports = ReactDefaultPerf;
 
-},{"./performanceNow":122}],46:[function(require,module,exports){
+},{"./performanceNow":119}],45:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -7771,7 +7998,7 @@ var ReactErrorUtils = {
 
 module.exports = ReactErrorUtils;
 
-},{}],47:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -7796,6 +8023,7 @@ module.exports = ReactErrorUtils;
 var EventConstants = require("./EventConstants");
 var EventListener = require("./EventListener");
 var EventPluginHub = require("./EventPluginHub");
+var EventPluginRegistry = require("./EventPluginRegistry");
 var ExecutionEnvironment = require("./ExecutionEnvironment");
 var ReactEventEmitterMixin = require("./ReactEventEmitterMixin");
 var ViewportMetrics = require("./ViewportMetrics");
@@ -7834,20 +8062,76 @@ var merge = require("./merge");
  * | ReactEvent |    .    |              |     |TapEvent   |  |------------|
  * |  Emitter   |    .    |              |<---+|Plugin     |  |other plugin|
  * |            |    .    |              |     +-----------+  |  utilities |
- * |     +-----------.---------+         |                    +------------+
- * |     |      |    .    +----|---------+
- * +-----|------+    .         |      ^        +-----------+
- *       |           .         |      |        |Enter/Leave|
- *       +           .         |      +-------+|Plugin     |
- * +-------------+   .         v               +-----------+
- * | application |   .    +----------+
- * |-------------|   .    | callback |
- * |             |   .    | registry |
- * |             |   .    +----------+
+ * |     +-----------.--->|              |                    +------------+
+ * |     |      |    .    +--------------+
+ * +-----|------+    .                ^        +-----------+
+ *       |           .                |        |Enter/Leave|
+ *       +           .                +-------+|Plugin     |
+ * +-------------+   .                         +-----------+
+ * | application |   .
+ * |-------------|   .
+ * |             |   .
+ * |             |   .
  * +-------------+   .
  *                   .
  *    React Core     .  General Purpose Event Plugin System
  */
+
+var alreadyListeningTo = {};
+var isMonitoringScrollValue = false;
+var reactTopListenersCounter = 0;
+var topEventMapping = {
+  topBlur: 'blur',
+  topChange: 'change',
+  topClick: 'click',
+  topCompositionEnd: 'compositionend',
+  topCompositionStart: 'compositionstart',
+  topCompositionUpdate: 'compositionupdate',
+  topContextMenu: 'contextmenu',
+  topCopy: 'copy',
+  topCut: 'cut',
+  topDoubleClick: 'dblclick',
+  topDrag: 'drag',
+  topDragEnd: 'dragend',
+  topDragEnter: 'dragenter',
+  topDragExit: 'dragexit',
+  topDragLeave: 'dragleave',
+  topDragOver: 'dragover',
+  topDragStart: 'dragstart',
+  topDrop: 'drop',
+  topFocus: 'focus',
+  topInput: 'input',
+  topKeyDown: 'keydown',
+  topKeyPress: 'keypress',
+  topKeyUp: 'keyup',
+  topMouseDown: 'mousedown',
+  topMouseMove: 'mousemove',
+  topMouseOut: 'mouseout',
+  topMouseOver: 'mouseover',
+  topMouseUp: 'mouseup',
+  topPaste: 'paste',
+  topScroll: 'scroll',
+  topSelectionChange: 'selectionchange',
+  topSubmit: 'submit',
+  topTouchCancel: 'touchcancel',
+  topTouchEnd: 'touchend',
+  topTouchMove: 'touchmove',
+  topTouchStart: 'touchstart',
+  topWheel: 'wheel'
+};
+
+/**
+ * To ensure no conflicts with other potential React instances on the page
+ */
+var topListenersIDKey = "_reactListenersID" + String(Math.random()).slice(2);
+
+function getListeningForDocument(mountAt) {
+  if (mountAt[topListenersIDKey] == null) {
+    mountAt[topListenersIDKey] = reactTopListenersCounter++;
+    alreadyListeningTo[mountAt[topListenersIDKey]] = {};
+  }
+  return alreadyListeningTo[mountAt[topListenersIDKey]];
+}
 
 /**
  * Traps top-level events by using event bubbling.
@@ -7886,21 +8170,6 @@ function trapCapturedEvent(topLevelType, handlerBaseName, element) {
 }
 
 /**
- * Listens to window scroll and resize events. We cache scroll values so that
- * application code can access them without triggering reflows.
- *
- * NOTE: Scroll events do not bubble.
- *
- * @private
- * @see http://www.quirksmode.org/dom/events/scroll.html
- */
-function registerScrollValueMonitoring() {
-  var refresh = ViewportMetrics.refreshScrollValues;
-  EventListener.listen(window, 'scroll', refresh);
-  EventListener.listen(window, 'resize', refresh);
-}
-
-/**
  * `ReactEventEmitter` is used to attach top-level event listeners. For example:
  *
  *   ReactEventEmitter.putListener('myID', 'onClick', myFunction);
@@ -7916,39 +8185,6 @@ var ReactEventEmitter = merge(ReactEventEmitterMixin, {
    * to allow dependency injection.
    */
   TopLevelCallbackCreator: null,
-
-  /**
-   * Ensures that top-level event delegation listeners are installed.
-   *
-   * There are issues with listening to both touch events and mouse events on
-   * the top-level, so we make the caller choose which one to listen to. (If
-   * there's a touch top-level listeners, anchors don't receive clicks for some
-   * reason, and only in some cases).
-   *
-   * @param {boolean} touchNotMouse Listen to touch events instead of mouse.
-   * @param {DOMDocument} contentDocument DOM document to listen on
-   */
-  ensureListening: function(touchNotMouse, contentDocument) {
-    ("production" !== "development" ? invariant(
-      ExecutionEnvironment.canUseDOM,
-      'ensureListening(...): Cannot toggle event listening in a Worker ' +
-      'thread. This is likely a bug in the framework. Please report ' +
-      'immediately.'
-    ) : invariant(ExecutionEnvironment.canUseDOM));
-    ("production" !== "development" ? invariant(
-      ReactEventEmitter.TopLevelCallbackCreator,
-      'ensureListening(...): Cannot be called without a top level callback ' +
-      'creator being injected.'
-    ) : invariant(ReactEventEmitter.TopLevelCallbackCreator));
-    // Call out to base implementation.
-    ReactEventEmitterMixin.ensureListening.call(
-      ReactEventEmitter,
-      {
-        touchNotMouse: touchNotMouse,
-        contentDocument: contentDocument
-      }
-    );
-  },
 
   /**
    * Sets whether or not any created callbacks should be enabled.
@@ -7994,108 +8230,84 @@ var ReactEventEmitter = merge(ReactEventEmitterMixin, {
    * Also, `keyup`/`keypress`/`keydown` do not bubble to the window on IE, but
    * they bubble to document.
    *
-   * @param {boolean} touchNotMouse Listen to touch events instead of mouse.
+   * @param {string} registrationName Name of listener (e.g. `onClick`).
    * @param {DOMDocument} contentDocument Document which owns the container
-   * @private
-   * @see http://www.quirksmode.org/dom/events/keys.html.
    */
-  listenAtTopLevel: function(touchNotMouse, contentDocument) {
-    ("production" !== "development" ? invariant(
-      !contentDocument._isListening,
-      'listenAtTopLevel(...): Cannot setup top-level listener more than once.'
-    ) : invariant(!contentDocument._isListening));
-    var topLevelTypes = EventConstants.topLevelTypes;
+  listenTo: function(registrationName, contentDocument) {
     var mountAt = contentDocument;
+    var isListening = getListeningForDocument(mountAt);
+    var dependencies = EventPluginRegistry.
+      registrationNameDependencies[registrationName];
 
-    registerScrollValueMonitoring();
-    trapBubbledEvent(topLevelTypes.topMouseOver, 'mouseover', mountAt);
-    trapBubbledEvent(topLevelTypes.topMouseDown, 'mousedown', mountAt);
-    trapBubbledEvent(topLevelTypes.topMouseUp, 'mouseup', mountAt);
-    trapBubbledEvent(topLevelTypes.topMouseMove, 'mousemove', mountAt);
-    trapBubbledEvent(topLevelTypes.topMouseOut, 'mouseout', mountAt);
-    trapBubbledEvent(topLevelTypes.topClick, 'click', mountAt);
-    trapBubbledEvent(topLevelTypes.topDoubleClick, 'dblclick', mountAt);
-    trapBubbledEvent(topLevelTypes.topContextMenu, 'contextmenu', mountAt);
-    if (touchNotMouse) {
-      trapBubbledEvent(topLevelTypes.topTouchStart, 'touchstart', mountAt);
-      trapBubbledEvent(topLevelTypes.topTouchEnd, 'touchend', mountAt);
-      trapBubbledEvent(topLevelTypes.topTouchMove, 'touchmove', mountAt);
-      trapBubbledEvent(topLevelTypes.topTouchCancel, 'touchcancel', mountAt);
-    }
-    trapBubbledEvent(topLevelTypes.topKeyUp, 'keyup', mountAt);
-    trapBubbledEvent(topLevelTypes.topKeyPress, 'keypress', mountAt);
-    trapBubbledEvent(topLevelTypes.topKeyDown, 'keydown', mountAt);
-    trapBubbledEvent(topLevelTypes.topInput, 'input', mountAt);
-    trapBubbledEvent(topLevelTypes.topChange, 'change', mountAt);
-    trapBubbledEvent(
-      topLevelTypes.topSelectionChange,
-      'selectionchange',
-      mountAt
-    );
+    var topLevelTypes = EventConstants.topLevelTypes;
+    for (var i = 0, l = dependencies.length; i < l; i++) {
+      var dependency = dependencies[i];
+      if (!isListening[dependency]) {
+        var topLevelType = topLevelTypes[dependency];
 
-    trapBubbledEvent(
-      topLevelTypes.topCompositionEnd,
-      'compositionend',
-      mountAt
-    );
-    trapBubbledEvent(
-      topLevelTypes.topCompositionStart,
-      'compositionstart',
-      mountAt
-    );
-    trapBubbledEvent(
-      topLevelTypes.topCompositionUpdate,
-      'compositionupdate',
-      mountAt
-    );
+        if (topLevelType === topLevelTypes.topWheel) {
+          if (isEventSupported('wheel')) {
+            trapBubbledEvent(topLevelTypes.topWheel, 'wheel', mountAt);
+          } else if (isEventSupported('mousewheel')) {
+            trapBubbledEvent(topLevelTypes.topWheel, 'mousewheel', mountAt);
+          } else {
+            // Firefox needs to capture a different mouse scroll event.
+            // @see http://www.quirksmode.org/dom/events/tests/scroll.html
+            trapBubbledEvent(
+              topLevelTypes.topWheel,
+              'DOMMouseScroll',
+              mountAt);
+          }
+        } else if (topLevelType === topLevelTypes.topScroll) {
 
-    if (isEventSupported('drag')) {
-      trapBubbledEvent(topLevelTypes.topDrag, 'drag', mountAt);
-      trapBubbledEvent(topLevelTypes.topDragEnd, 'dragend', mountAt);
-      trapBubbledEvent(topLevelTypes.topDragEnter, 'dragenter', mountAt);
-      trapBubbledEvent(topLevelTypes.topDragExit, 'dragexit', mountAt);
-      trapBubbledEvent(topLevelTypes.topDragLeave, 'dragleave', mountAt);
-      trapBubbledEvent(topLevelTypes.topDragOver, 'dragover', mountAt);
-      trapBubbledEvent(topLevelTypes.topDragStart, 'dragstart', mountAt);
-      trapBubbledEvent(topLevelTypes.topDrop, 'drop', mountAt);
-    }
+          if (isEventSupported('scroll', true)) {
+            trapCapturedEvent(topLevelTypes.topScroll, 'scroll', mountAt);
+          } else {
+            trapBubbledEvent(topLevelTypes.topScroll, 'scroll', window);
+          }
+        } else if (topLevelType === topLevelTypes.topFocus ||
+            topLevelType === topLevelTypes.topBlur) {
 
-    if (isEventSupported('wheel')) {
-      trapBubbledEvent(topLevelTypes.topWheel, 'wheel', mountAt);
-    } else if (isEventSupported('mousewheel')) {
-      trapBubbledEvent(topLevelTypes.topWheel, 'mousewheel', mountAt);
-    } else {
-      // Firefox needs to capture a different mouse scroll event.
-      // @see http://www.quirksmode.org/dom/events/tests/scroll.html
-      trapBubbledEvent(topLevelTypes.topWheel, 'DOMMouseScroll', mountAt);
-    }
+          if (isEventSupported('focus', true)) {
+            trapCapturedEvent(topLevelTypes.topFocus, 'focus', mountAt);
+            trapCapturedEvent(topLevelTypes.topBlur, 'blur', mountAt);
+          } else if (isEventSupported('focusin')) {
+            // IE has `focusin` and `focusout` events which bubble.
+            // @see http://www.quirksmode.org/blog/archives/2008/04/delegating_the.html
+            trapBubbledEvent(topLevelTypes.topFocus, 'focusin', mountAt);
+            trapBubbledEvent(topLevelTypes.topBlur, 'focusout', mountAt);
+          }
 
-    // IE<9 does not support capturing so just trap the bubbled event there.
-    if (isEventSupported('scroll', true)) {
-      trapCapturedEvent(topLevelTypes.topScroll, 'scroll', mountAt);
-    } else {
-      trapBubbledEvent(topLevelTypes.topScroll, 'scroll', window);
-    }
+          // to make sure blur and focus event listeners are only attached once
+          isListening[topLevelTypes.topBlur] = true;
+          isListening[topLevelTypes.topFocus] = true;
+        } else {
+          trapBubbledEvent(topLevelType, topEventMapping[dependency], mountAt);
+        }
 
-    if (isEventSupported('focus', true)) {
-      trapCapturedEvent(topLevelTypes.topFocus, 'focus', mountAt);
-      trapCapturedEvent(topLevelTypes.topBlur, 'blur', mountAt);
-    } else if (isEventSupported('focusin')) {
-      // IE has `focusin` and `focusout` events which bubble.
-      // @see
-      // http://www.quirksmode.org/blog/archives/2008/04/delegating_the.html
-      trapBubbledEvent(topLevelTypes.topFocus, 'focusin', mountAt);
-      trapBubbledEvent(topLevelTypes.topBlur, 'focusout', mountAt);
-    }
-
-    if (isEventSupported('copy')) {
-      trapBubbledEvent(topLevelTypes.topCopy, 'copy', mountAt);
-      trapBubbledEvent(topLevelTypes.topCut, 'cut', mountAt);
-      trapBubbledEvent(topLevelTypes.topPaste, 'paste', mountAt);
+        isListening[dependency] = true;
+      }
     }
   },
 
-  registrationNames: EventPluginHub.registrationNames,
+  /**
+   * Listens to window scroll and resize events. We cache scroll values so that
+   * application code can access them without triggering reflows.
+   *
+   * NOTE: Scroll events do not bubble.
+   *
+   * @see http://www.quirksmode.org/dom/events/scroll.html
+   */
+  ensureScrollValueMonitoring: function(){
+    if (!isMonitoringScrollValue) {
+      var refresh = ViewportMetrics.refreshScrollValues;
+      EventListener.listen(window, 'scroll', refresh);
+      EventListener.listen(window, 'resize', refresh);
+      isMonitoringScrollValue = true;
+    }
+  },
+
+  registrationNameModules: EventPluginHub.registrationNameModules,
 
   putListener: EventPluginHub.putListener,
 
@@ -8111,10 +8323,9 @@ var ReactEventEmitter = merge(ReactEventEmitterMixin, {
 
 });
 
-
 module.exports = ReactEventEmitter;
 
-},{"./EventConstants":16,"./EventListener":17,"./EventPluginHub":18,"./ExecutionEnvironment":22,"./ReactEventEmitterMixin":48,"./ViewportMetrics":82,"./invariant":106,"./isEventSupported":107,"./merge":115}],48:[function(require,module,exports){
+},{"./EventConstants":14,"./EventListener":15,"./EventPluginHub":16,"./EventPluginRegistry":17,"./ExecutionEnvironment":20,"./ReactEventEmitterMixin":47,"./ViewportMetrics":81,"./invariant":104,"./isEventSupported":105,"./merge":113}],47:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -8144,38 +8355,6 @@ function runEventQueueInBatch(events) {
 }
 
 var ReactEventEmitterMixin = {
-  /**
-   * Whether or not `ensureListening` has been invoked.
-   * @type {boolean}
-   * @private
-   */
-  _isListening: false,
-
-  /**
-   * Function, must be implemented. Listens to events on the top level of the
-   * application.
-   *
-   * @abstract
-   *
-   * listenAtTopLevel: null,
-   */
-
-  /**
-   * Ensures that top-level event delegation listeners are installed.
-   *
-   * There are issues with listening to both touch events and mouse events on
-   * the top-level, so we make the caller choose which one to listen to. (If
-   * there's a touch top-level listeners, anchors don't receive clicks for some
-   * reason, and only in some cases).
-   *
-   * @param {*} config Configuration passed through to `listenAtTopLevel`.
-   */
-  ensureListening: function(config) {
-    if (!config.contentDocument._reactIsListening) {
-      this.listenAtTopLevel(config.touchNotMouse, config.contentDocument);
-      config.contentDocument._reactIsListening = true;
-    }
-  },
 
   /**
    * Streams a fired top-level event to `EventPluginHub` where plugins have the
@@ -8205,7 +8384,7 @@ var ReactEventEmitterMixin = {
 
 module.exports = ReactEventEmitterMixin;
 
-},{"./EventPluginHub":18,"./ReactUpdates":67}],49:[function(require,module,exports){
+},{"./EventPluginHub":16,"./ReactUpdates":66}],48:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -8316,7 +8495,7 @@ var ReactEventTopLevelCallback = {
 
 module.exports = ReactEventTopLevelCallback;
 
-},{"./ReactEventEmitter":47,"./ReactInstanceHandles":51,"./ReactMount":53,"./getEventTarget":99}],50:[function(require,module,exports){
+},{"./ReactEventEmitter":46,"./ReactInstanceHandles":50,"./ReactMount":52,"./getEventTarget":97}],49:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -8458,7 +8637,7 @@ var ReactInputSelection = {
 
 module.exports = ReactInputSelection;
 
-},{"./ReactDOMSelection":41,"./containsNode":85,"./getActiveElement":98}],51:[function(require,module,exports){
+},{"./ReactDOMSelection":40,"./containsNode":84,"./getActiveElement":95}],50:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -8629,7 +8808,8 @@ function getFirstCommonAncestorID(oneID, twoID) {
 
 /**
  * Traverses the parent path between two IDs (either up or down). The IDs must
- * not be the same, and there must exist a parent path between them.
+ * not be the same, and there must exist a parent path between them. If the
+ * callback returns `false`, traversal is stopped.
  *
  * @param {?string} start ID at which to start traversal.
  * @param {?string} stop ID at which to end traversal.
@@ -8658,10 +8838,11 @@ function traverseParentPath(start, stop, cb, arg, skipFirst, skipLast) {
   var depth = 0;
   var traverse = traverseUp ? getParentID : getNextDescendantID;
   for (var id = start; /* until break */; id = traverse(id, stop)) {
+    var ret;
     if ((!skipFirst || id !== start) && (!skipLast || id !== stop)) {
-      cb(id, traverseUp, arg);
+      ret = cb(id, traverseUp, arg);
     }
-    if (id === stop) {
+    if (ret === false || id === stop) {
       // Only break //after// visiting `stop`.
       break;
     }
@@ -8758,6 +8939,22 @@ var ReactInstanceHandles = {
   },
 
   /**
+   * Traverse a node ID, calling the supplied `cb` for each ancestor ID. For
+   * example, passing `.r[0].{row-0}.[1]` would result in `cb` getting called
+   * with `.r[0]`, `.r[0].{row-0}`, and `.r[0].{row-0}.[1]`.
+   *
+   * NOTE: This traversal happens on IDs without touching the DOM.
+   *
+   * @param {string} targetID ID of the target node.
+   * @param {function} cb Callback to invoke.
+   * @param {*} arg Argument to invoke the callback with.
+   * @internal
+   */
+  traverseAncestors: function(targetID, cb, arg) {
+    traverseParentPath('', targetID, cb, arg, true, false);
+  },
+
+  /**
    * Exposed for unit testing.
    * @private
    */
@@ -8777,7 +8974,7 @@ var ReactInstanceHandles = {
 
 module.exports = ReactInstanceHandles;
 
-},{"./ReactRootIndex":64,"./invariant":106}],52:[function(require,module,exports){
+},{"./ReactRootIndex":63,"./invariant":104}],51:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -8832,7 +9029,7 @@ var ReactMarkupChecksum = {
 
 module.exports = ReactMarkupChecksum;
 
-},{"./adler32":84}],53:[function(require,module,exports){
+},{"./adler32":83}],52:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -8857,7 +9054,6 @@ var DOMProperty = require("./DOMProperty");
 var ReactEventEmitter = require("./ReactEventEmitter");
 var ReactInstanceHandles = require("./ReactInstanceHandles");
 
-var $ = require("./$");
 var containsNode = require("./containsNode");
 var getReactRootElementInContainer = require("./getReactRootElementInContainer");
 var invariant = require("./invariant");
@@ -8998,12 +9194,42 @@ function purgeID(id) {
   delete nodeCache[id];
 }
 
+var deepestNodeSoFar = null;
+function findDeepestCachedAncestorImpl(ancestorID) {
+  var ancestor = nodeCache[ancestorID];
+  if (ancestor && isValid(ancestor, ancestorID)) {
+    deepestNodeSoFar = ancestor;
+  } else {
+    // This node isn't populated in the cache, so presumably none of its
+    // descendants are. Break out of the loop.
+    return false;
+  }
+}
+
+/**
+ * Return the deepest cached node whose ID is a prefix of `targetID`.
+ */
+function findDeepestCachedAncestor(targetID) {
+  deepestNodeSoFar = null;
+  ReactInstanceHandles.traverseAncestors(
+    targetID,
+    findDeepestCachedAncestorImpl
+  );
+
+  var foundNode = deepestNodeSoFar;
+  deepestNodeSoFar = null;
+  return foundNode;
+}
+
 /**
  * Mounting is the process of initializing a React component by creatings its
  * representative DOM elements and inserting them into a supplied `container`.
  * Any prior content inside `container` is destroyed in the process.
  *
- *   ReactMount.renderComponent(component, $('container'));
+ *   ReactMount.renderComponent(
+ *     component,
+ *     document.getElementById('container')
+ *   );
  *
  *   <div id="container">                   <-- Supplied `container`.
  *     <div data-reactid=".r[3]">           <-- Rendered reactRoot of React
@@ -9014,11 +9240,6 @@ function purgeID(id) {
  * Inside of `container`, the first element rendered is the "reactRoot".
  */
 var ReactMount = {
-  /**
-   * Safety guard to prevent accidentally rendering over the entire HTML tree.
-   */
-  allowFullPageRender: false,
-
   /** Time spent generating markup. */
   totalInstantiationTime: 0,
 
@@ -9041,30 +9262,6 @@ var ReactMount = {
    */
   scrollMonitor: function(container, renderCallback) {
     renderCallback();
-  },
-
-  /**
-   * Ensures that the top-level event delegation listener is set up. This will
-   * be invoked some time before the first time any React component is rendered.
-   * @param {DOMElement} container container we're rendering into
-   *
-   * @private
-   */
-  prepareEnvironmentForDOM: function(container) {
-    ("production" !== "development" ? invariant(
-      container && (
-        container.nodeType === ELEMENT_NODE_TYPE ||
-        container.nodeType === DOC_NODE_TYPE
-      ),
-      'prepareEnvironmentForDOM(...): Target container is not a DOM element.'
-    ) : invariant(container && (
-      container.nodeType === ELEMENT_NODE_TYPE ||
-      container.nodeType === DOC_NODE_TYPE
-    )));
-    var doc = container.nodeType === ELEMENT_NODE_TYPE ?
-      container.ownerDocument :
-      container;
-    ReactEventEmitter.ensureListening(ReactMount.useTouchEvents, doc);
   },
 
   /**
@@ -9094,13 +9291,25 @@ var ReactMount = {
   },
 
   /**
-   * Register a component into the instance map and start the events system.
+   * Register a component into the instance map and starts scroll value
+   * monitoring
    * @param {ReactComponent} nextComponent component instance to render
    * @param {DOMElement} container container to render into
    * @return {string} reactRoot ID prefix
    */
   _registerComponent: function(nextComponent, container) {
-    ReactMount.prepareEnvironmentForDOM(container);
+    ("production" !== "development" ? invariant(
+      container && (
+        container.nodeType === ELEMENT_NODE_TYPE ||
+        container.nodeType === DOC_NODE_TYPE
+      ),
+      '_registerComponent(...): Target container is not a DOM element.'
+    ) : invariant(container && (
+      container.nodeType === ELEMENT_NODE_TYPE ||
+      container.nodeType === DOC_NODE_TYPE
+    )));
+
+    ReactEventEmitter.ensureScrollValueMonitoring();
 
     var reactRootID = ReactMount.registerContainer(container);
     instancesByReactRootID[reactRootID] = nextComponent;
@@ -9173,7 +9382,7 @@ var ReactMount = {
       container,
       shouldReuseMarkup
     );
-    callback && callback();
+    callback && callback.call(component);
     return component;
   },
 
@@ -9200,7 +9409,13 @@ var ReactMount = {
    * @return {ReactComponent} Component instance rendered in the container node.
    */
   constructAndRenderComponentByID: function(constructor, props, id) {
-    return ReactMount.constructAndRenderComponent(constructor, props, $(id));
+    var domNode = document.getElementById(id);
+    ("production" !== "development" ? invariant(
+      domNode,
+      'Tried to get element with id of "%s" but it is not present on the page.',
+      id
+    ) : invariant(domNode));
+    return ReactMount.constructAndRenderComponent(constructor, props, domNode);
   },
 
   /**
@@ -9359,46 +9574,45 @@ var ReactMount = {
   },
 
   /**
-   * Finds a node with the supplied `id` inside of the supplied `ancestorNode`.
-   * Exploits the ID naming scheme to perform the search quickly.
+   * Finds a node with the supplied `targetID` inside of the supplied
+   * `ancestorNode`.  Exploits the ID naming scheme to perform the search
+   * quickly.
    *
    * @param {DOMEventTarget} ancestorNode Search from this root.
-   * @pararm {string} id ID of the DOM representation of the component.
-   * @return {DOMEventTarget} DOM node with the supplied `id`.
+   * @pararm {string} targetID ID of the DOM representation of the component.
+   * @return {DOMEventTarget} DOM node with the supplied `targetID`.
    * @internal
    */
-  findComponentRoot: function(ancestorNode, id) {
+  findComponentRoot: function(ancestorNode, targetID) {
     var firstChildren = findComponentRootReusableArray;
     var childIndex = 0;
 
-    firstChildren[0] = ancestorNode.firstChild;
+    var deepestAncestor = findDeepestCachedAncestor(targetID) || ancestorNode;
+
+    firstChildren[0] = deepestAncestor.firstChild;
     firstChildren.length = 1;
 
     while (childIndex < firstChildren.length) {
       var child = firstChildren[childIndex++];
+      var targetChild;
+
       while (child) {
         var childID = ReactMount.getID(child);
         if (childID) {
-          if (id === childID) {
-            // Emptying firstChildren/findComponentRootReusableArray is
-            // not necessary for correctness, but it helps the GC reclaim
-            // any nodes that were left at the end of the search.
-            firstChildren.length = 0;
+          // Even if we find the node we're looking for, we finish looping
+          // through its siblings to ensure they're cached so that we don't have
+          // to revisit this node again. Otherwise, we make n^2 calls to getID
+          // when visiting the many children of a single node in order.
 
-            return child;
-          }
-
-          if (ReactInstanceHandles.isAncestorIDOf(childID, id)) {
+          if (targetID === childID) {
+            targetChild = child;
+          } else if (ReactInstanceHandles.isAncestorIDOf(childID, targetID)) {
             // If we find a child whose ID is an ancestor of the given ID,
             // then we can be sure that we only want to search the subtree
             // rooted at this child, so we can throw out the rest of the
             // search state.
             firstChildren.length = childIndex = 0;
             firstChildren.push(child.firstChild);
-
-            // Ignore the rest of this child's siblings and immediately
-            // continue the outer loop with child.firstChild as child.
-            break;
           }
 
         } else {
@@ -9412,22 +9626,25 @@ var ReactMount = {
 
         child = child.nextSibling;
       }
+
+      if (targetChild) {
+        // Emptying firstChildren/findComponentRootReusableArray is
+        // not necessary for correctness, but it helps the GC reclaim
+        // any nodes that were left at the end of the search.
+        firstChildren.length = 0;
+
+        return targetChild;
+      }
     }
 
     firstChildren.length = 0;
 
-    if ("production" !== "development") {
-      console.error(
-        'Error while invoking `findComponentRoot` with the following ' +
-        'ancestor node:',
-        ancestorNode
-      );
-    }
     ("production" !== "development" ? invariant(
       false,
       'findComponentRoot(..., %s): Unable to find element. This probably ' +
-      'means the DOM was unexpectedly mutated (e.g. by the browser).',
-      id,
+      'means the DOM was unexpectedly mutated (e.g., by the browser). ' +
+      'Try inspecting the child nodes of the element with React ID `%s`.',
+      targetID,
       ReactMount.getID(ancestorNode)
     ) : invariant(false));
   },
@@ -9452,7 +9669,7 @@ var ReactMount = {
 
 module.exports = ReactMount;
 
-},{"./$":1,"./DOMProperty":10,"./ReactEventEmitter":47,"./ReactInstanceHandles":51,"./containsNode":85,"./getReactRootElementInContainer":102,"./invariant":106,"./shouldUpdateReactComponent":124}],54:[function(require,module,exports){
+},{"./DOMProperty":8,"./ReactEventEmitter":46,"./ReactInstanceHandles":50,"./containsNode":84,"./getReactRootElementInContainer":100,"./invariant":104,"./shouldUpdateReactComponent":121}],53:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -9549,7 +9766,7 @@ PooledClass.addPoolingTo(ReactMountReady);
 
 module.exports = ReactMountReady;
 
-},{"./PooledClass":25,"./mixInto":118}],55:[function(require,module,exports){
+},{"./PooledClass":23,"./mixInto":116}],54:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -9743,7 +9960,7 @@ var ReactMultiChild = {
       this._renderedChildren = children;
       for (var name in children) {
         var child = children[name];
-        if (children.hasOwnProperty(name) && child) {
+        if (children.hasOwnProperty(name)) {
           // Inlined for performance, see `ReactInstanceHandles.createReactID`.
           var rootID = this._rootNodeID + '.' + name;
           var mountImage = child.mountComponent(
@@ -9751,7 +9968,6 @@ var ReactMultiChild = {
             transaction,
             this._mountDepth + 1
           );
-          child._mountImage = mountImage;
           child._mountIndex = index;
           mountImages.push(mountImage);
           index++;
@@ -9772,8 +9988,7 @@ var ReactMultiChild = {
         var prevChildren = this._renderedChildren;
         // Remove any rendered children.
         for (var name in prevChildren) {
-          if (prevChildren.hasOwnProperty(name) &&
-              prevChildren[name]) {
+          if (prevChildren.hasOwnProperty(name)) {
             this._unmountChildByName(prevChildren[name], name);
           }
         }
@@ -9845,20 +10060,15 @@ var ReactMultiChild = {
             lastIndex = Math.max(prevChild._mountIndex, lastIndex);
             this._unmountChildByName(prevChild, name);
           }
-          if (nextChild) {
-            this._mountChildByNameAtIndex(
-              nextChild, name, nextIndex, transaction
-            );
-          }
+          this._mountChildByNameAtIndex(
+            nextChild, name, nextIndex, transaction
+          );
         }
-        if (nextChild) {
-          nextIndex++;
-        }
+        nextIndex++;
       }
       // Remove children that are no longer present.
       for (name in prevChildren) {
         if (prevChildren.hasOwnProperty(name) &&
-            prevChildren[name] &&
             !(nextChildren && nextChildren[name])) {
           this._unmountChildByName(prevChildren[name], name);
         }
@@ -9875,7 +10085,8 @@ var ReactMultiChild = {
       var renderedChildren = this._renderedChildren;
       for (var name in renderedChildren) {
         var renderedChild = renderedChildren[name];
-        if (renderedChild && renderedChild.unmountComponent) {
+        // TODO: When is this not true?
+        if (renderedChild.unmountComponent) {
           renderedChild.unmountComponent();
         }
       }
@@ -9903,10 +10114,11 @@ var ReactMultiChild = {
      * Creates a child component.
      *
      * @param {ReactComponent} child Component to create.
+     * @param {string} mountImage Markup to insert.
      * @protected
      */
-    createChild: function(child) {
-      enqueueMarkup(this._rootNodeID, child._mountImage, child._mountIndex);
+    createChild: function(child, mountImage) {
+      enqueueMarkup(this._rootNodeID, mountImage, child._mountIndex);
     },
 
     /**
@@ -9948,9 +10160,8 @@ var ReactMultiChild = {
         transaction,
         this._mountDepth + 1
       );
-      child._mountImage = mountImage;
       child._mountIndex = index;
-      this.createChild(child);
+      this.createChild(child, mountImage);
       this._renderedChildren = this._renderedChildren || {};
       this._renderedChildren[name] = child;
     },
@@ -9965,9 +10176,9 @@ var ReactMultiChild = {
      * @private
      */
     _unmountChildByName: function(child, name) {
+      // TODO: When is this not true?
       if (ReactComponent.isValidComponent(child)) {
         this.removeChild(child);
-        child._mountImage = null;
         child._mountIndex = null;
         child.unmountComponent();
         delete this._renderedChildren[name];
@@ -9980,7 +10191,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 
-},{"./ReactComponent":27,"./ReactMultiChildUpdateTypes":56,"./flattenChildren":95,"./shouldUpdateReactComponent":124}],56:[function(require,module,exports){
+},{"./ReactComponent":25,"./ReactMultiChildUpdateTypes":55,"./flattenChildren":93,"./shouldUpdateReactComponent":121}],55:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10018,7 +10229,7 @@ var ReactMultiChildUpdateTypes = keyMirror({
 
 module.exports = ReactMultiChildUpdateTypes;
 
-},{"./keyMirror":112}],57:[function(require,module,exports){
+},{"./keyMirror":110}],56:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10174,7 +10385,7 @@ var ReactOwner = {
 
 module.exports = ReactOwner;
 
-},{"./invariant":106}],58:[function(require,module,exports){
+},{"./invariant":104}],57:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10264,7 +10475,7 @@ function _noMeasure(objName, fnName, func) {
 
 module.exports = ReactPerf;
 
-},{"./ExecutionEnvironment":22}],59:[function(require,module,exports){
+},{"./ExecutionEnvironment":20}],58:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10411,7 +10622,7 @@ var ReactPropTransferer = {
 
 module.exports = ReactPropTransferer;
 
-},{"./emptyFunction":91,"./invariant":106,"./joinClasses":111,"./merge":115}],60:[function(require,module,exports){
+},{"./emptyFunction":91,"./invariant":104,"./joinClasses":109,"./merge":113}],59:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10444,7 +10655,7 @@ if ("production" !== "development") {
 
 module.exports = ReactPropTypeLocationNames;
 
-},{}],61:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10475,7 +10686,7 @@ var ReactPropTypeLocations = keyMirror({
 
 module.exports = ReactPropTypeLocations;
 
-},{"./keyMirror":112}],62:[function(require,module,exports){
+},{"./keyMirror":110}],61:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10559,16 +10770,30 @@ var Props = {
   object: createPrimitiveTypeChecker('object'),
   string: createPrimitiveTypeChecker('string'),
 
+  shape: createShapeTypeChecker,
   oneOf: createEnumTypeChecker,
   oneOfType: createUnionTypeChecker,
 
   instanceOf: createInstanceTypeChecker,
 
-  renderable: createRenderableTypeChecker()
+  renderable: createRenderableTypeChecker(),
 
+  component: createComponentTypeChecker(),
+
+  any: createAnyTypeChecker()
 };
 
 var ANONYMOUS = '<<anonymous>>';
+
+function createAnyTypeChecker() {
+  function validateAnyType(
+    shouldThrow, propValue, propName, componentName, location
+  ) {
+    // always is valid
+    return true;
+  }
+  return createChainableTypeChecker(validateAnyType);
+}
 
 function isRenderable(propValue) {
   switch(typeof propValue) {
@@ -10593,14 +10818,20 @@ function isRenderable(propValue) {
   }
 }
 
+// Equivalent of typeof but with special handling for arrays
+function getPropType(propValue) {
+  var propType = typeof propValue;
+  if (propType === 'object' && Array.isArray(propValue)) {
+    return 'array';
+  }
+  return propType;
+}
+
 function createPrimitiveTypeChecker(expectedType) {
   function validatePrimitiveType(
     shouldThrow, propValue, propName, componentName, location
   ) {
-    var propType = typeof propValue;
-    if (propType === 'object' && Array.isArray(propValue)) {
-      propType = 'array';
-    }
+    var propType = getPropType(propValue);
     var isValid = propType === expectedType;
     if (!shouldThrow) {
       return isValid;
@@ -10637,6 +10868,36 @@ function createEnumTypeChecker(expectedValues) {
     ) : invariant(isValid));
   }
   return createChainableTypeChecker(validateEnumType);
+}
+
+function createShapeTypeChecker(shapeTypes) {
+  function validateShapeType(
+    shouldThrow, propValue, propName, componentName, location
+  ) {
+    var propType = getPropType(propValue);
+    var isValid = propType === 'object';
+    if (isValid) {
+      for (var key in shapeTypes) {
+        var checker = shapeTypes[key];
+        if (checker) {
+          // It's going to throw an exception if it doesn't pass
+          checker(propValue, key, componentName, location);
+        }
+      }
+    }
+    if (!shouldThrow) {
+      return isValid;
+    }
+    ("production" !== "development" ? invariant(
+      isValid,
+      'Invalid %s `%s` of type `%s` supplied to `%s`, expected `object`.',
+      ReactPropTypeLocationNames[location],
+      propName,
+      propType,
+      componentName
+    ) : invariant(isValid));
+  }
+  return createChainableTypeChecker(validateShapeType);
 }
 
 function createInstanceTypeChecker(expectedClass) {
@@ -10676,6 +10937,25 @@ function createRenderableTypeChecker() {
     ) : invariant(isValid));
   }
   return createChainableTypeChecker(validateRenderableType);
+}
+
+function createComponentTypeChecker() {
+  function validateComponentType(
+    shouldThrow, propValue, propName, componentName, location
+  ) {
+    var isValid = ReactComponent.isValidComponent(propValue);
+    if (!shouldThrow) {
+      return isValid;
+    }
+    ("production" !== "development" ? invariant(
+      isValid,
+      'Invalid %s `%s` supplied to `%s`, expected a React component.',
+      ReactPropTypeLocationNames[location],
+      propName,
+      componentName
+    ) : invariant(isValid));
+  }
+  return createChainableTypeChecker(validateComponentType);
 }
 
 function createChainableTypeChecker(validate) {
@@ -10741,7 +11021,7 @@ function createUnionTypeChecker(arrayOfValidators) {
 
 module.exports = Props;
 
-},{"./ReactComponent":27,"./ReactPropTypeLocationNames":60,"./createObjectFrom":89,"./invariant":106}],63:[function(require,module,exports){
+},{"./ReactComponent":25,"./ReactPropTypeLocationNames":59,"./createObjectFrom":89,"./invariant":104}],62:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10904,7 +11184,7 @@ PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
 
-},{"./ExecutionEnvironment":22,"./PooledClass":25,"./ReactEventEmitter":47,"./ReactInputSelection":50,"./ReactMountReady":54,"./Transaction":81,"./mixInto":118}],64:[function(require,module,exports){
+},{"./ExecutionEnvironment":20,"./PooledClass":23,"./ReactEventEmitter":46,"./ReactInputSelection":49,"./ReactMountReady":53,"./Transaction":80,"./mixInto":116}],63:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -10942,7 +11222,7 @@ var ReactRootIndex = {
 
 module.exports = ReactRootIndex;
 
-},{}],65:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11006,7 +11286,7 @@ module.exports = {
   renderComponentToString: renderComponentToString
 };
 
-},{"./ReactComponent":27,"./ReactInstanceHandles":51,"./ReactMarkupChecksum":52,"./ReactReconcileTransaction":63,"./invariant":106}],66:[function(require,module,exports){
+},{"./ReactComponent":25,"./ReactInstanceHandles":50,"./ReactMarkupChecksum":51,"./ReactReconcileTransaction":62,"./invariant":104}],65:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11102,7 +11382,7 @@ mixInto(ReactTextComponent, {
 
 module.exports = ReactTextComponent;
 
-},{"./DOMPropertyOperations":11,"./ReactComponent":27,"./escapeTextForBrowser":92,"./mixInto":118}],67:[function(require,module,exports){
+},{"./DOMPropertyOperations":9,"./ReactComponent":25,"./escapeTextForBrowser":92,"./mixInto":116}],66:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11207,7 +11487,7 @@ function enqueueUpdate(component, callback) {
 
   if (!batchingStrategy.isBatchingUpdates) {
     component.performUpdateIfNecessary();
-    callback && callback();
+    callback && callback.call(component);
     return;
   }
 
@@ -11249,7 +11529,7 @@ var ReactUpdates = {
 
 module.exports = ReactUpdates;
 
-},{"./invariant":106}],68:[function(require,module,exports){
+},{"./invariant":104}],67:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11271,9 +11551,7 @@ module.exports = ReactUpdates;
 "use strict";
 
 var EventConstants = require("./EventConstants");
-var EventPluginHub = require("./EventPluginHub");
 var EventPropagators = require("./EventPropagators");
-var ExecutionEnvironment = require("./ExecutionEnvironment");
 var ReactInputSelection = require("./ReactInputSelection");
 var SyntheticEvent = require("./SyntheticEvent");
 
@@ -11289,19 +11567,21 @@ var eventTypes = {
     phasedRegistrationNames: {
       bubbled: keyOf({onSelect: null}),
       captured: keyOf({onSelectCapture: null})
-    }
+    },
+    dependencies: [
+      topLevelTypes.topBlur,
+      topLevelTypes.topContextMenu,
+      topLevelTypes.topFocus,
+      topLevelTypes.topKeyDown,
+      topLevelTypes.topMouseDown,
+      topLevelTypes.topMouseUp,
+      topLevelTypes.topSelectionChange
+    ]
   }
 };
 
-var useSelectionChange = false;
-
-if (ExecutionEnvironment.canUseDOM) {
-  useSelectionChange = 'onselectionchange' in document;
-}
-
 var activeElement = null;
 var activeElementID = null;
-var activeNativeEvent = null;
 var lastSelection = null;
 var mouseDown = false;
 
@@ -11348,8 +11628,12 @@ function getSelection(node) {
  */
 function constructSelectEvent(nativeEvent) {
   // Ensure we have the right element, and that the user is not dragging a
-  // selection (this matches native `select` event behavior).
-  if (mouseDown || activeElement != getActiveElement()) {
+  // selection (this matches native `select` event behavior). In HTML5, select
+  // fires only on input and textarea thus if there's no focused element we
+  // won't dispatch.
+  if (mouseDown ||
+      activeElement == null ||
+      activeElement != getActiveElement()) {
     return;
   }
 
@@ -11370,24 +11654,6 @@ function constructSelectEvent(nativeEvent) {
     EventPropagators.accumulateTwoPhaseDispatches(syntheticEvent);
 
     return syntheticEvent;
-  }
-}
-
-/**
- * Handle deferred event. And manually dispatch synthetic events.
- */
-function dispatchDeferredSelectEvent() {
-  if (!activeNativeEvent) {
-    return;
-  }
-
-  var syntheticEvent = constructSelectEvent(activeNativeEvent);
-  activeNativeEvent = null;
-
-  // Enqueue and process the abstract event manually.
-  if (syntheticEvent) {
-    EventPluginHub.enqueueEvents(syntheticEvent);
-    EventPluginHub.processEventQueue();
   }
 }
 
@@ -11451,24 +11717,21 @@ var SelectEventPlugin = {
 
       // Chrome and IE fire non-standard event when selection is changed (and
       // sometimes when it hasn't).
-      case topLevelTypes.topSelectionChange:
-        return constructSelectEvent(nativeEvent);
-
       // Firefox doesn't support selectionchange, so check selection status
-      // after each key entry.
+      // after each key entry. The selection changes after keydown and before
+      // keyup, but we check on keydown as well in the case of holding down a
+      // key, when multiple keydown events are fired but only one keyup is.
+      case topLevelTypes.topSelectionChange:
       case topLevelTypes.topKeyDown:
-        if (!useSelectionChange) {
-          activeNativeEvent = nativeEvent;
-          setTimeout(dispatchDeferredSelectEvent, 0);
-        }
-        break;
+      case topLevelTypes.topKeyUp:
+        return constructSelectEvent(nativeEvent);
     }
   }
 };
 
 module.exports = SelectEventPlugin;
 
-},{"./EventConstants":16,"./EventPluginHub":18,"./EventPropagators":21,"./ExecutionEnvironment":22,"./ReactInputSelection":50,"./SyntheticEvent":74,"./getActiveElement":98,"./isTextInputElement":109,"./keyOf":113,"./shallowEqual":123}],69:[function(require,module,exports){
+},{"./EventConstants":14,"./EventPropagators":19,"./ReactInputSelection":49,"./SyntheticEvent":73,"./getActiveElement":95,"./isTextInputElement":107,"./keyOf":111,"./shallowEqual":120}],68:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11506,7 +11769,7 @@ var ServerReactRootIndex = {
 
 module.exports = ServerReactRootIndex;
 
-},{}],70:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11528,6 +11791,7 @@ module.exports = ServerReactRootIndex;
 "use strict";
 
 var EventConstants = require("./EventConstants");
+var EventPluginUtils = require("./EventPluginUtils");
 var EventPropagators = require("./EventPropagators");
 var SyntheticClipboardEvent = require("./SyntheticClipboardEvent");
 var SyntheticEvent = require("./SyntheticEvent");
@@ -11659,6 +11923,12 @@ var eventTypes = {
       captured: keyOf({onKeyUpCapture: true})
     }
   },
+  load: {
+    phasedRegistrationNames: {
+      bubbled: keyOf({onLoad: true}),
+      captured: keyOf({onLoadCapture: true})
+    }
+  },
   // Note: We do not allow listening to mouseOver events. Instead, use the
   // onMouseEnter/onMouseLeave created by `EnterLeaveEventPlugin`.
   mouseDown: {
@@ -11671,6 +11941,18 @@ var eventTypes = {
     phasedRegistrationNames: {
       bubbled: keyOf({onMouseMove: true}),
       captured: keyOf({onMouseMoveCapture: true})
+    }
+  },
+  mouseOut: {
+    phasedRegistrationNames: {
+      bubbled: keyOf({onMouseOut: true}),
+      captured: keyOf({onMouseOutCapture: true})
+    }
+  },
+  mouseOver: {
+    phasedRegistrationNames: {
+      bubbled: keyOf({onMouseOver: true}),
+      captured: keyOf({onMouseOverCapture: true})
     }
   },
   mouseUp: {
@@ -11749,8 +12031,11 @@ var topLevelEventsToDispatchConfig = {
   topKeyDown:     eventTypes.keyDown,
   topKeyPress:    eventTypes.keyPress,
   topKeyUp:       eventTypes.keyUp,
+  topLoad:        eventTypes.load,
   topMouseDown:   eventTypes.mouseDown,
   topMouseMove:   eventTypes.mouseMove,
+  topMouseOut:    eventTypes.mouseOut,
+  topMouseOver:   eventTypes.mouseOver,
   topMouseUp:     eventTypes.mouseUp,
   topPaste:       eventTypes.paste,
   topScroll:      eventTypes.scroll,
@@ -11761,6 +12046,10 @@ var topLevelEventsToDispatchConfig = {
   topTouchStart:  eventTypes.touchStart,
   topWheel:       eventTypes.wheel
 };
+
+for (var topLevelType in topLevelEventsToDispatchConfig) {
+  topLevelEventsToDispatchConfig[topLevelType].dependencies = [topLevelType];
+}
 
 var SimpleEventPlugin = {
 
@@ -11775,7 +12064,7 @@ var SimpleEventPlugin = {
    * @param {string} domID DOM ID to pass to the callback.
    */
   executeDispatch: function(event, listener, domID) {
-    var returnValue = listener(event, domID);
+    var returnValue = EventPluginUtils.executeDispatch(event, listener, domID);
     if (returnValue === false) {
       event.stopPropagation();
       event.preventDefault();
@@ -11800,8 +12089,9 @@ var SimpleEventPlugin = {
       return null;
     }
     var EventConstructor;
-    switch(topLevelType) {
+    switch (topLevelType) {
       case topLevelTypes.topInput:
+      case topLevelTypes.topLoad:
       case topLevelTypes.topSubmit:
         // HTML Events
         // @see http://www.w3.org/TR/html5/index.html#events-0
@@ -11827,6 +12117,8 @@ var SimpleEventPlugin = {
       case topLevelTypes.topDoubleClick:
       case topLevelTypes.topMouseDown:
       case topLevelTypes.topMouseMove:
+      case topLevelTypes.topMouseOut:
+      case topLevelTypes.topMouseOver:
       case topLevelTypes.topMouseUp:
         EventConstructor = SyntheticMouseEvent;
         break;
@@ -11876,8 +12168,8 @@ var SimpleEventPlugin = {
 
 module.exports = SimpleEventPlugin;
 
-},{"./EventConstants":16,"./EventPropagators":21,"./SyntheticClipboardEvent":71,"./SyntheticDragEvent":73,"./SyntheticEvent":74,"./SyntheticFocusEvent":75,"./SyntheticKeyboardEvent":76,"./SyntheticMouseEvent":77,"./SyntheticTouchEvent":78,"./SyntheticUIEvent":79,"./SyntheticWheelEvent":80,"./invariant":106,"./keyOf":113}],71:[function(require,module,exports){
-var global=typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {};/**
+},{"./EventConstants":14,"./EventPluginUtils":18,"./EventPropagators":19,"./SyntheticClipboardEvent":70,"./SyntheticDragEvent":72,"./SyntheticEvent":73,"./SyntheticFocusEvent":74,"./SyntheticKeyboardEvent":75,"./SyntheticMouseEvent":76,"./SyntheticTouchEvent":77,"./SyntheticUIEvent":78,"./SyntheticWheelEvent":79,"./invariant":104,"./keyOf":111}],70:[function(require,module,exports){
+/**
  * Copyright 2013 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -11909,7 +12201,7 @@ var ClipboardEventInterface = {
     return (
       'clipboardData' in event ?
         event.clipboardData :
-        global.clipboardData
+        window.clipboardData
     );
   }
 };
@@ -11929,7 +12221,7 @@ SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 module.exports = SyntheticClipboardEvent;
 
 
-},{"./SyntheticEvent":74}],72:[function(require,module,exports){
+},{"./SyntheticEvent":73}],71:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -11982,7 +12274,7 @@ SyntheticEvent.augmentClass(
 module.exports = SyntheticCompositionEvent;
 
 
-},{"./SyntheticEvent":74}],73:[function(require,module,exports){
+},{"./SyntheticEvent":73}],72:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12028,7 +12320,7 @@ SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
 
-},{"./SyntheticMouseEvent":77}],74:[function(require,module,exports){
+},{"./SyntheticMouseEvent":76}],73:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12064,7 +12356,8 @@ var mergeInto = require("./mergeInto");
 var EventInterface = {
   type: null,
   target: getEventTarget,
-  currentTarget: null,
+  // currentTarget is set when dispatching; no use in copying it here
+  currentTarget: emptyFunction.thatReturnsNull,
   eventPhase: null,
   bubbles: null,
   cancelable: null,
@@ -12193,7 +12486,7 @@ PooledClass.addPoolingTo(SyntheticEvent, PooledClass.threeArgumentPooler);
 
 module.exports = SyntheticEvent;
 
-},{"./PooledClass":25,"./emptyFunction":91,"./getEventTarget":99,"./merge":115,"./mergeInto":117}],75:[function(require,module,exports){
+},{"./PooledClass":23,"./emptyFunction":91,"./getEventTarget":97,"./merge":113,"./mergeInto":115}],74:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12239,7 +12532,7 @@ SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
 
-},{"./SyntheticUIEvent":79}],76:[function(require,module,exports){
+},{"./SyntheticUIEvent":78}],75:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12263,71 +12556,14 @@ module.exports = SyntheticFocusEvent;
 
 var SyntheticUIEvent = require("./SyntheticUIEvent");
 
-/**
- * Normalization of deprecated HTML5 "key" values
- * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent#Key_names
- */
-
-var normalizeKey = {
-  'Esc': 'Escape',
-  'Spacebar': ' ',
-  'Left': 'ArrowLeft',
-  'Up': 'ArrowUp',
-  'Right': 'ArrowRight',
-  'Down': 'ArrowDown',
-  'Del': 'Delete',
-  'Win': 'OS',
-  'Menu': 'ContextMenu',
-  'Apps': 'ContextMenu',
-  'Scroll': 'ScrollLock',
-  'MozPrintableKey': 'Unidentified'
-};
-
-/**
- * Translation from legacy "which/keyCode" to HTML5 "key"
- * Only special keys supported, all others depend on keyboard layout or browser
- * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent#Key_names
- */
-
-var translateToKey = {
-  8: 'Backspace',
-  9: 'Tab',
-  12: 'Clear',
-  13: 'Enter',
-  16: 'Shift',
-  17: 'Control',
-  18: 'Alt',
-  19: 'Pause',
-  20: 'CapsLock',
-  27: 'Escape',
-  32: ' ',
-  33: 'PageUp',
-  34: 'PageDown',
-  35: 'End',
-  36: 'Home',
-  37: 'ArrowLeft',
-  38: 'ArrowUp',
-  39: 'ArrowRight',
-  40: 'ArrowDown',
-  45: 'Insert',
-  46: 'Delete',
-  112: 'F1', 113: 'F2', 114: 'F3', 115: 'F4', 116: 'F5', 117: 'F6',
-  118: 'F7', 119: 'F8', 120: 'F9', 121: 'F10', 122: 'F11', 123: 'F12',
-  144: 'NumLock',
-  145: 'ScrollLock',
-  224: 'Meta'
-};
+var getEventKey = require("./getEventKey");
 
 /**
  * @interface KeyboardEvent
  * @see http://www.w3.org/TR/DOM-Level-3-Events/
  */
 var KeyboardEventInterface = {
-  key: function(event) {
-    return 'key' in event ?
-      normalizeKey[event.key] || event.key :
-      translateToKey[event.which || event.keyCode] || 'Unidentified';
-  },
+  key: getEventKey,
   location: null,
   ctrlKey: null,
   shiftKey: null,
@@ -12356,7 +12592,7 @@ SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
 
-},{"./SyntheticUIEvent":79}],77:[function(require,module,exports){
+},{"./SyntheticUIEvent":78,"./getEventKey":96}],76:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12443,7 +12679,7 @@ SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
 
-},{"./SyntheticUIEvent":79,"./ViewportMetrics":82}],78:[function(require,module,exports){
+},{"./SyntheticUIEvent":78,"./ViewportMetrics":81}],77:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12495,7 +12731,7 @@ SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
 
-},{"./SyntheticUIEvent":79}],79:[function(require,module,exports){
+},{"./SyntheticUIEvent":78}],78:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12542,7 +12778,7 @@ SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
 
-},{"./SyntheticEvent":74}],80:[function(require,module,exports){
+},{"./SyntheticEvent":73}],79:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12572,7 +12808,6 @@ var SyntheticMouseEvent = require("./SyntheticMouseEvent");
  */
 var WheelEventInterface = {
   deltaX: function(event) {
-    // NOTE: IE<9 does not support x-axis delta.
     return (
       'deltaX' in event ? event.deltaX :
       // Fallback to `wheelDeltaX` for Webkit and normalize (right is positive).
@@ -12581,15 +12816,19 @@ var WheelEventInterface = {
   },
   deltaY: function(event) {
     return (
-      // Normalize (up is positive).
-      'deltaY' in event ? -event.deltaY :
-      // Fallback to `wheelDeltaY` for Webkit.
-      'wheelDeltaY' in event ? event.wheelDeltaY :
-      // Fallback to `wheelDelta` for IE<9.
-      'wheelDelta' in event ? event.wheelDelta : 0
+      'deltaY' in event ? event.deltaY :
+      // Fallback to `wheelDeltaY` for Webkit and normalize (down is positive).
+      'wheelDeltaY' in event ? -event.wheelDeltaY :
+      // Fallback to `wheelDelta` for IE<9 and normalize (down is positive).
+      'wheelDelta' in event ? -event.wheelDelta : 0
     );
   },
   deltaZ: null,
+
+  // Browsers without "deltaMode" is reporting in raw wheel delta where one
+  // notch on the scroll is always +/- 120, roughly equivalent to pixels.
+  // A good approximation of DOM_DELTA_LINE (1) is 5% of viewport size or
+  // ~40 pixels, for DOM_DELTA_SCREEN (2) it is 87.5% of viewport size.
   deltaMode: null
 };
 
@@ -12607,7 +12846,7 @@ SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
 
-},{"./SyntheticMouseEvent":77}],81:[function(require,module,exports){
+},{"./SyntheticMouseEvent":76}],80:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12860,7 +13099,7 @@ var Transaction = {
 
 module.exports = Transaction;
 
-},{"./invariant":106}],82:[function(require,module,exports){
+},{"./invariant":104}],81:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12899,7 +13138,7 @@ var ViewportMetrics = {
 
 module.exports = ViewportMetrics;
 
-},{"./getUnboundedScrollPosition":104}],83:[function(require,module,exports){
+},{"./getUnboundedScrollPosition":102}],82:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12955,7 +13194,7 @@ function accumulate(current, next) {
 
 module.exports = accumulate;
 
-},{"./invariant":106}],84:[function(require,module,exports){
+},{"./invariant":104}],83:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -12996,7 +13235,7 @@ function adler32(data) {
 
 module.exports = adler32;
 
-},{}],85:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13047,7 +13286,7 @@ function containsNode(outerNode, innerNode) {
 
 module.exports = containsNode;
 
-},{"./isTextNode":110}],86:[function(require,module,exports){
+},{"./isTextNode":108}],85:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13103,7 +13342,7 @@ function copyProperties(obj, a, b, c, d, e, f) {
 
 module.exports = copyProperties;
 
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13123,11 +13362,9 @@ module.exports = copyProperties;
  * @typechecks
  */
 
+var toArray = require("./toArray");
+
 /**
- * NOTE: if you are a previous user of this function, it has been considered
- * unsafe because it's inconsistent across browsers for some inputs.
- * Instead use `Array.isArray()`.
- *
  * Perform a heuristic test to determine if an object is "array-like".
  *
  *   A monk asked Joshu, a Zen master, "Has a dog Buddha nature?"
@@ -13136,6 +13373,8 @@ module.exports = copyProperties;
  * This function determines if its argument has "array nature": it returns
  * true if the argument is an actual array, an `arguments' object, or an
  * HTMLCollection (e.g. node.childNodes or node.getElementsByTagName()).
+ *
+ * It will return false for other array-like objects like Filelist.
  *
  * @param {*} obj
  * @return {boolean}
@@ -13178,8 +13417,8 @@ function hasArrayNature(obj) {
  *
  * This allows you to treat `things' as an array, but accept scalars in the API.
  *
- * This is also good for converting certain pseudo-arrays, like `arguments` or
- * HTMLCollections, into arrays.
+ * If you need to convert an array-like object, like `arguments`, into an array
+ * use toArray instead.
  *
  * @param {*} obj
  * @return {array}
@@ -13187,19 +13426,81 @@ function hasArrayNature(obj) {
 function createArrayFrom(obj) {
   if (!hasArrayNature(obj)) {
     return [obj];
+  } else if (Array.isArray(obj)) {
+    return obj.slice();
+  } else {
+    return toArray(obj);
   }
-  if (obj.item) {
-    // IE does not support Array#slice on HTMLCollections
-    var l = obj.length, ret = new Array(l);
-    while (l--) { ret[l] = obj[l]; }
-    return ret;
-  }
-  return Array.prototype.slice.call(obj);
 }
 
 module.exports = createArrayFrom;
 
-},{}],88:[function(require,module,exports){
+},{"./toArray":122}],87:[function(require,module,exports){
+/**
+ * Copyright 2013 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @providesModule createFullPageComponent
+ * @typechecks
+ */
+
+"use strict";
+
+// Defeat circular references by requiring this directly.
+var ReactCompositeComponent = require("./ReactCompositeComponent");
+
+var invariant = require("./invariant");
+
+/**
+ * Create a component that will throw an exception when unmounted.
+ *
+ * Components like <html> <head> and <body> can't be removed or added
+ * easily in a cross-browser way, however it's valuable to be able to
+ * take advantage of React's reconciliation for styling and <title>
+ * management. So we just document it and throw in dangerous cases.
+ *
+ * @param {function} componentClass convenience constructor to wrap
+ * @return {function} convenience constructor of new component
+ */
+function createFullPageComponent(componentClass) {
+  var FullPageComponent = ReactCompositeComponent.createClass({
+    displayName: 'ReactFullPageComponent' + (
+      componentClass.componentConstructor.displayName || ''
+    ),
+
+    componentWillUnmount: function() {
+      ("production" !== "development" ? invariant(
+        false,
+        '%s tried to unmount. Because of cross-browser quirks it is ' +
+        'impossible to unmount some top-level components (eg <html>, <head>, ' +
+        'and <body>) reliably and efficiently. To fix this, have a single ' +
+        'top-level component that never unmounts render these elements.',
+        this.constructor.displayName
+      ) : invariant(false));
+    },
+
+    render: function() {
+      return this.transferPropsTo(componentClass(null, this.props.children));
+    }
+  });
+
+  return FullPageComponent;
+}
+
+module.exports = createFullPageComponent;
+
+},{"./ReactCompositeComponent":28,"./invariant":104}],88:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13294,7 +13595,7 @@ function createNodesFromMarkup(markup, handleScript) {
 
 module.exports = createNodesFromMarkup;
 
-},{"./ExecutionEnvironment":22,"./createArrayFrom":87,"./getMarkupWrap":100,"./invariant":106}],89:[function(require,module,exports){
+},{"./ExecutionEnvironment":20,"./createArrayFrom":86,"./getMarkupWrap":98,"./invariant":104}],89:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13416,7 +13717,7 @@ function dangerousStyleValue(styleName, value) {
 
 module.exports = dangerousStyleValue;
 
-},{"./CSSProperty":3}],91:[function(require,module,exports){
+},{"./CSSProperty":2}],91:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13461,7 +13762,7 @@ copyProperties(emptyFunction, {
 
 module.exports = emptyFunction;
 
-},{"./copyProperties":86}],92:[function(require,module,exports){
+},{"./copyProperties":85}],92:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13526,100 +13827,6 @@ module.exports = escapeTextForBrowser;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * @providesModule ex
- * @typechecks
- * @nostacktrace
- */
-
-/**
- * This function transforms error message with arguments into plain text error
- * message, so that it can be passed to window.onerror without losing anything.
- * It can then be transformed back by `erx()` function.
- *
- * Usage:
- *   throw new Error(ex('Error %s from %s', errorCode, userID));
- *
- * @param {string} errorMessage
- */
-
-var ex = function() {var args=Array.prototype.slice.call(arguments,0);
-  args = args.map(function(arg)  {return String(arg);});
-  if (args[0].split('%s').length !== args.length) {
-    // something wrong with the formatting string
-    return ex('ex args number mismatch: %s', JSON.stringify(args));
-  }
-
-  return ex._prefix + JSON.stringify(args) + ex._suffix;
-};
-
-ex._prefix = '<![EX[';
-ex._suffix = ']]>';
-
-module.exports = ex;
-
-},{}],94:[function(require,module,exports){
-/**
- * Copyright 2013 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * @providesModule filterAttributes
- * @typechecks static-only
- */
-
-/*jslint evil: true */
-
-'use strict';
-
-/**
- * Like filter(), but for a DOM nodes attributes. Returns an array of
- * the filter DOMAttribute objects. Does some perf related this like
- * caching attributes.length.
- *
- * @param {DOMElement} node Node whose attributes you want to filter
- * @return {array} array of DOM attribute objects.
- */
-function filterAttributes(node, func, context) {
-  var attributes = node.attributes;
-  var numAttributes = attributes.length;
-  var accumulator = [];
-  for (var i = 0; i < numAttributes; i++) {
-    var attr = attributes.item(i);
-    if (func.call(context, attr)) {
-      accumulator.push(attr);
-    }
-  }
-  return accumulator;
-}
-
-module.exports = filterAttributes;
-
-},{}],95:[function(require,module,exports){
-/**
- * Copyright 2013 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
  * @providesModule flattenChildren
  */
 
@@ -13642,11 +13849,14 @@ function flattenSingleChildIntoContext(traverseContext, child, name) {
     'Children keys must be unique.',
     name
   ) : invariant(!result.hasOwnProperty(name)));
-  result[name] = child;
+  if (child != null) {
+    result[name] = child;
+  }
 }
 
 /**
- * Flattens children that are typically specified as `props.children`.
+ * Flattens children that are typically specified as `props.children`. Any null
+ * children will not be included in the resulting object.
  * @return {!object} flattened children keyed by name.
  */
 function flattenChildren(children) {
@@ -13660,7 +13870,7 @@ function flattenChildren(children) {
 
 module.exports = flattenChildren;
 
-},{"./invariant":106,"./traverseAllChildren":125}],96:[function(require,module,exports){
+},{"./invariant":104,"./traverseAllChildren":123}],94:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13698,85 +13908,7 @@ var forEachAccumulated = function(arr, cb, scope) {
 
 module.exports = forEachAccumulated;
 
-},{}],97:[function(require,module,exports){
-/**
- * Copyright 2013 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * @providesModule ge
- */
-
-/**
- * Find a node by ID.  Optionally search a sub-tree outside of the document
- *
- * Use ge if you're not sure whether or not the element exists. You can test
- * for existence yourself in your application code.
- *
- * If your application code depends on the existence of the element, use $
- * instead, which will throw in DEV if the element doesn't exist.
- */
-function ge(arg, root, tag) {
-  return typeof arg != 'string' ? arg :
-    !root ? document.getElementById(arg) :
-    _geFromSubtree(arg, root, tag);
-}
-
-function _geFromSubtree(id, root, tag) {
-  var elem, children, ii;
-
-  if (_getNodeID(root) == id) {
-    return root;
-  } else if (root.getElementsByTagName) {
-    // All Elements implement this, which does an iterative DFS, which is
-    // faster than recursion and doesn't run into stack depth issues.
-    children = root.getElementsByTagName(tag || '*');
-    for (ii = 0; ii < children.length; ii++) {
-      if (_getNodeID(children[ii]) == id) {
-        return children[ii];
-      }
-    }
-  } else {
-    // DocumentFragment does not implement getElementsByTagName, so
-    // recurse over its children. Its children must be Elements, so
-    // each child will use the getElementsByTagName case instead.
-    children = root.childNodes;
-    for (ii = 0; ii < children.length; ii++) {
-      elem = _geFromSubtree(id, children[ii]);
-      if (elem) {
-        return elem;
-      }
-    }
-  }
-
-  return null;
-}
-
-/**
- * Return the ID value for a given node. This allows us to avoid issues
- * with forms that contain inputs with name="id".
- *
- * @return string (null if attribute not set)
- */
-function _getNodeID(node) {
-  // #document and #document-fragment do not have getAttributeNode.
-  var id = node.getAttributeNode && node.getAttributeNode('id');
-  return id ? id.value : null;
-}
-
-module.exports = ge;
-
-},{}],98:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13799,19 +13931,107 @@ module.exports = ge;
 /**
  * Same as document.activeElement but wraps in a try-catch block. In IE it is
  * not safe to call document.activeElement if there is nothing focused.
+ *
+ * The activeElement will be null only if the document body is not yet defined.
  */
 function getActiveElement() /*?DOMElement*/ {
   try {
-    return document.activeElement;
+    return document.activeElement || document.body;
   } catch (e) {
-    return null;
+    return document.body;
   }
 }
 
 module.exports = getActiveElement;
 
+},{}],96:[function(require,module,exports){
+/**
+ * Copyright 2013 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @providesModule getEventKey
+ * @typechecks static-only
+ */
 
-},{}],99:[function(require,module,exports){
+"use strict";
+
+/**
+ * Normalization of deprecated HTML5 "key" values
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent#Key_names
+ */
+var normalizeKey = {
+  'Esc': 'Escape',
+  'Spacebar': ' ',
+  'Left': 'ArrowLeft',
+  'Up': 'ArrowUp',
+  'Right': 'ArrowRight',
+  'Down': 'ArrowDown',
+  'Del': 'Delete',
+  'Win': 'OS',
+  'Menu': 'ContextMenu',
+  'Apps': 'ContextMenu',
+  'Scroll': 'ScrollLock',
+  'MozPrintableKey': 'Unidentified'
+};
+
+/**
+ * Translation from legacy "which/keyCode" to HTML5 "key"
+ * Only special keys supported, all others depend on keyboard layout or browser
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent#Key_names
+ */
+var translateToKey = {
+  8: 'Backspace',
+  9: 'Tab',
+  12: 'Clear',
+  13: 'Enter',
+  16: 'Shift',
+  17: 'Control',
+  18: 'Alt',
+  19: 'Pause',
+  20: 'CapsLock',
+  27: 'Escape',
+  32: ' ',
+  33: 'PageUp',
+  34: 'PageDown',
+  35: 'End',
+  36: 'Home',
+  37: 'ArrowLeft',
+  38: 'ArrowUp',
+  39: 'ArrowRight',
+  40: 'ArrowDown',
+  45: 'Insert',
+  46: 'Delete',
+  112: 'F1', 113: 'F2', 114: 'F3', 115: 'F4', 116: 'F5', 117: 'F6',
+  118: 'F7', 119: 'F8', 120: 'F9', 121: 'F10', 122: 'F11', 123: 'F12',
+  144: 'NumLock',
+  145: 'ScrollLock',
+  224: 'Meta'
+};
+
+/**
+ * @param {object} nativeEvent Native browser event.
+ * @return {string} Normalized `key` property.
+ */
+function getEventKey(nativeEvent) {
+  return 'key' in nativeEvent ?
+    normalizeKey[nativeEvent.key] || nativeEvent.key :
+    translateToKey[nativeEvent.which || nativeEvent.keyCode] || 'Unidentified';
+}
+
+module.exports = getEventKey;
+
+},{}],97:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13849,7 +14069,7 @@ function getEventTarget(nativeEvent) {
 
 module.exports = getEventTarget;
 
-},{}],100:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -13888,11 +14108,16 @@ var shouldWrap = {
   // Force wrapping for SVG elements because if they get created inside a <div>,
   // they will be initialized in the wrong namespace (and will not display).
   'circle': true,
+  'defs': true,
   'g': true,
   'line': true,
+  'linearGradient': true,
   'path': true,
+  'polygon': true,
   'polyline': true,
+  'radialGradient': true,
   'rect': true,
+  'stop': true,
   'text': true
 };
 
@@ -13924,11 +14149,16 @@ var markupWrap = {
   'th': trWrap,
 
   'circle': svgWrap,
+  'defs': svgWrap,
   'g': svgWrap,
   'line': svgWrap,
+  'linearGradient': svgWrap,
   'path': svgWrap,
+  'polygon': svgWrap,
   'polyline': svgWrap,
+  'radialGradient': svgWrap,
   'rect': svgWrap,
+  'stop': svgWrap,
   'text': svgWrap
 };
 
@@ -13959,7 +14189,7 @@ function getMarkupWrap(nodeName) {
 
 module.exports = getMarkupWrap;
 
-},{"./ExecutionEnvironment":22,"./invariant":106}],101:[function(require,module,exports){
+},{"./ExecutionEnvironment":20,"./invariant":104}],99:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14041,7 +14271,7 @@ function getNodeForCharacterOffset(root, offset) {
 
 module.exports = getNodeForCharacterOffset;
 
-},{}],102:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14083,7 +14313,7 @@ function getReactRootElementInContainer(container) {
 
 module.exports = getReactRootElementInContainer;
 
-},{}],103:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14125,7 +14355,7 @@ function getTextContentAccessor() {
 
 module.exports = getTextContentAccessor;
 
-},{"./ExecutionEnvironment":22}],104:[function(require,module,exports){
+},{"./ExecutionEnvironment":20}],102:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14160,8 +14390,8 @@ module.exports = getTextContentAccessor;
 function getUnboundedScrollPosition(scrollable) {
   if (scrollable === window) {
     return {
-      x: document.documentElement.scrollLeft || document.body.scrollLeft,
-      y: document.documentElement.scrollTop  || document.body.scrollTop
+      x: window.pageXOffset || document.documentElement.scrollLeft,
+      y: window.pageYOffset || document.documentElement.scrollTop
     };
   }
   return {
@@ -14172,7 +14402,7 @@ function getUnboundedScrollPosition(scrollable) {
 
 module.exports = getUnboundedScrollPosition;
 
-},{}],105:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14209,7 +14439,7 @@ function hyphenate(string) {
 
 module.exports = hyphenate;
 
-},{}],106:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14231,8 +14461,9 @@ module.exports = hyphenate;
 /**
  * Use invariant() to assert state which your program assumes to be true.
  *
- * Provide sprintf style format and arguments to provide information about
- * what broke and what you were expecting.
+ * Provide sprintf-style format (only %s is supported) and arguments
+ * to provide information about what broke and what you were
+ * expecting.
  *
  * The invariant message will be stripped in production, but the invariant
  * will remain to ensure logic does not differ in production.
@@ -14240,7 +14471,9 @@ module.exports = hyphenate;
 
 function invariant(condition) {
   if (!condition) {
-    throw new Error('Invariant Violation');
+    var error = new Error('Invariant Violation');
+    error.framesToPop = 1;
+    throw error;
   }
 }
 
@@ -14255,17 +14488,19 @@ if ("production" !== "development") {
     if (!condition) {
       var args = [a, b, c, d, e, f];
       var argIndex = 0;
-      throw new Error(
+      var error = new Error(
         'Invariant Violation: ' +
         format.replace(/%s/g, function() { return args[argIndex++]; })
       );
+      error.framesToPop = 1; // we don't care about invariant's own frame
+      throw error;
     }
   };
 
   module.exports = invariantDev;
 }
 
-},{}],107:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14288,13 +14523,13 @@ if ("production" !== "development") {
 
 var ExecutionEnvironment = require("./ExecutionEnvironment");
 
-var testNode, useHasFeature;
+var useHasFeature;
 if (ExecutionEnvironment.canUseDOM) {
-  testNode = document.createElement('div');
   useHasFeature =
     document.implementation &&
     document.implementation.hasFeature &&
-    // `hasFeature` always returns true in Firefox 19+.
+    // always returns true in newer browsers as per the standard.
+    // @see http://dom.spec.whatwg.org/#dom-domimplementation-hasfeature
     document.implementation.hasFeature('', '') !== true;
 }
 
@@ -14313,15 +14548,16 @@ if (ExecutionEnvironment.canUseDOM) {
  * @license Modernizr 3.0.0pre (Custom Build) | MIT
  */
 function isEventSupported(eventNameSuffix, capture) {
-  if (!testNode || (capture && !testNode.addEventListener)) {
+  if (!ExecutionEnvironment.canUseDOM ||
+      capture && !('addEventListener' in document)) {
     return false;
   }
-  var element = document.createElement('div');
 
   var eventName = 'on' + eventNameSuffix;
-  var isSupported = eventName in element;
+  var isSupported = eventName in document;
 
   if (!isSupported) {
+    var element = document.createElement('div');
     element.setAttribute(eventName, 'return;');
     isSupported = typeof element[eventName] === 'function';
   }
@@ -14336,7 +14572,7 @@ function isEventSupported(eventNameSuffix, capture) {
 
 module.exports = isEventSupported;
 
-},{"./ExecutionEnvironment":22}],108:[function(require,module,exports){
+},{"./ExecutionEnvironment":20}],106:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14371,7 +14607,7 @@ function isNode(object) {
 
 module.exports = isNode;
 
-},{}],109:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14423,7 +14659,7 @@ function isTextInputElement(elem) {
 
 module.exports = isTextInputElement;
 
-},{}],110:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14455,7 +14691,7 @@ function isTextNode(object) {
 
 module.exports = isTextNode;
 
-},{"./isNode":108}],111:[function(require,module,exports){
+},{"./isNode":106}],109:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14501,7 +14737,7 @@ function joinClasses(className/*, ... */) {
 
 module.exports = joinClasses;
 
-},{}],112:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14561,7 +14797,7 @@ var keyMirror = function(obj) {
 
 module.exports = keyMirror;
 
-},{"./invariant":106}],113:[function(require,module,exports){
+},{"./invariant":104}],111:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14604,7 +14840,7 @@ var keyOf = function(oneKeyObj) {
 
 module.exports = keyOf;
 
-},{}],114:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14645,7 +14881,7 @@ function memoizeStringOnly(callback) {
 
 module.exports = memoizeStringOnly;
 
-},{}],115:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14684,7 +14920,7 @@ var merge = function(one, two) {
 
 module.exports = merge;
 
-},{"./mergeInto":117}],116:[function(require,module,exports){
+},{"./mergeInto":115}],114:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14753,9 +14989,9 @@ var mergeHelpers = {
   checkMergeArrayArgs: function(one, two) {
     ("production" !== "development" ? invariant(
       Array.isArray(one) && Array.isArray(two),
-      'Critical assumptions about the merge functions have been violated. ' +
-      'This is the fault of the merge functions themselves, not necessarily ' +
-      'the callers.'
+      'Tried to merge arrays, instead got %s and %s.',
+      one,
+      two
     ) : invariant(Array.isArray(one) && Array.isArray(two)));
   },
 
@@ -14774,9 +15010,8 @@ var mergeHelpers = {
   checkMergeObjectArg: function(arg) {
     ("production" !== "development" ? invariant(
       !isTerminal(arg) && !Array.isArray(arg),
-      'Critical assumptions about the merge functions have been violated. ' +
-      'This is the fault of the merge functions themselves, not necessarily ' +
-      'the callers.'
+      'Tried to merge an object, instead got %s.',
+      arg
     ) : invariant(!isTerminal(arg) && !Array.isArray(arg)));
   },
 
@@ -14823,7 +15058,7 @@ var mergeHelpers = {
 
 module.exports = mergeHelpers;
 
-},{"./invariant":106,"./keyMirror":112}],117:[function(require,module,exports){
+},{"./invariant":104,"./keyMirror":110}],115:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14870,7 +15105,7 @@ function mergeInto(one, two) {
 
 module.exports = mergeInto;
 
-},{"./mergeHelpers":116}],118:[function(require,module,exports){
+},{"./mergeHelpers":114}],116:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -14906,109 +15141,7 @@ var mixInto = function(constructor, methodBag) {
 
 module.exports = mixInto;
 
-},{}],119:[function(require,module,exports){
-/**
- * Copyright 2013 Facebook, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * @providesModule mutateHTMLNodeWithMarkup
- * @typechecks static-only
- */
-
-/*jslint evil: true */
-
-'use strict';
-
-var createNodesFromMarkup = require("./createNodesFromMarkup");
-var filterAttributes = require("./filterAttributes");
-var invariant = require("./invariant");
-
-/**
- * You can't set the innerHTML of a document. Unless you have
- * this function.
- *
- * @param {DOMElement} node with tagName == 'html'
- * @param {string} markup markup string including <html>.
- */
-function mutateHTMLNodeWithMarkup(node, markup) {
-  ("production" !== "development" ? invariant(
-    node.tagName.toLowerCase() === 'html',
-    'mutateHTMLNodeWithMarkup(): node must have tagName of "html", got %s',
-    node.tagName
-  ) : invariant(node.tagName.toLowerCase() === 'html'));
-
-  markup = markup.trim();
-  ("production" !== "development" ? invariant(
-    markup.toLowerCase().indexOf('<html') === 0,
-    'mutateHTMLNodeWithMarkup(): markup must start with <html'
-  ) : invariant(markup.toLowerCase().indexOf('<html') === 0));
-
-  // First let's extract the various pieces of markup.
-  var htmlOpenTagEnd = markup.indexOf('>') + 1;
-  var htmlCloseTagStart = markup.lastIndexOf('<');
-  var htmlOpenTag = markup.substring(0, htmlOpenTagEnd);
-  var innerHTML = markup.substring(htmlOpenTagEnd, htmlCloseTagStart);
-
-  // Now for the fun stuff. Pass through both sets of attributes and
-  // bring them up-to-date. We get the new set by creating a markup
-  // fragment.
-  var shouldExtractAttributes = htmlOpenTag.indexOf(' ') > -1;
-  var attributeHolder = null;
-
-  if (shouldExtractAttributes) {
-    // We extract the attributes by creating a <span> and evaluating
-    // the node.
-    attributeHolder = createNodesFromMarkup(
-      htmlOpenTag.replace('html ', 'span ') + '</span>'
-    )[0];
-
-    // Add all attributes present in attributeHolder
-    var attributesToSet = filterAttributes(
-      attributeHolder,
-      function(attr) {
-        return node.getAttributeNS(attr.namespaceURI, attr.name) !== attr.value;
-      }
-    );
-    attributesToSet.forEach(function(attr) {
-      node.setAttributeNS(attr.namespaceURI, attr.name, attr.value);
-    });
-  }
-
-  // Remove all attributes not present in attributeHolder
-  var attributesToRemove = filterAttributes(
-    node,
-    function(attr) {
-      // Remove all attributes if attributeHolder is null or if it does not have
-      // the desired attribute.
-      return !(
-        attributeHolder &&
-          attributeHolder.hasAttributeNS(attr.namespaceURI, attr.name)
-      );
-    }
-  );
-  attributesToRemove.forEach(function(attr) {
-    node.removeAttributeNS(attr.namespaceURI, attr.name);
-  });
-
-  // Finally, set the inner HTML. No tricks needed. Do this last to
-  // minimize likelihood of triggering reflows.
-  node.innerHTML = innerHTML;
-}
-
-module.exports = mutateHTMLNodeWithMarkup;
-
-},{"./createNodesFromMarkup":88,"./filterAttributes":94,"./invariant":106}],120:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -15057,7 +15190,7 @@ function objMap(obj, func, context) {
 
 module.exports = objMap;
 
-},{}],121:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -15106,7 +15239,7 @@ function objMapKeyVal(obj, func, context) {
 
 module.exports = objMapKeyVal;
 
-},{}],122:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -15150,7 +15283,7 @@ var performanceNow = performance.now.bind(performance);
 
 module.exports = performanceNow;
 
-},{"./ExecutionEnvironment":22}],123:[function(require,module,exports){
+},{"./ExecutionEnvironment":20}],120:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -15201,7 +15334,7 @@ function shallowEqual(objA, objB) {
 
 module.exports = shallowEqual;
 
-},{}],124:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -15235,11 +15368,11 @@ module.exports = shallowEqual;
 function shouldUpdateReactComponent(prevComponent, nextComponent) {
   // TODO: Remove warning after a release.
   if (prevComponent && nextComponent &&
-      prevComponent.constructor === nextComponent.constructor) {
-    if (prevComponent._owner === nextComponent._owner && (
-          (prevComponent.props && prevComponent.props.key) ===
-          (nextComponent.props && nextComponent.props.key)
-        )) {
+      prevComponent.constructor === nextComponent.constructor && (
+        (prevComponent.props && prevComponent.props.key) ===
+        (nextComponent.props && nextComponent.props.key)
+      )) {
+    if (prevComponent._owner === nextComponent._owner) {
       return true;
     } else {
       if ("production" !== "development") {
@@ -15261,7 +15394,84 @@ function shouldUpdateReactComponent(prevComponent, nextComponent) {
 
 module.exports = shouldUpdateReactComponent;
 
-},{}],125:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
+/**
+ * Copyright 2014 Facebook, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @providesModule toArray
+ * @typechecks
+ */
+
+var invariant = require("./invariant");
+
+/**
+ * Convert array-like objects to arrays.
+ *
+ * This API assumes the caller knows the contents of the data type. For less
+ * well defined inputs use createArrayFrom.
+ *
+ * @param {object|function} obj
+ * @return {array}
+ */
+function toArray(obj) {
+  var length = obj.length;
+
+  // Some browse builtin objects can report typeof 'function' (e.g. NodeList in
+  // old versions of Safari).
+  ("production" !== "development" ? invariant(
+    !Array.isArray(obj) &&
+    (typeof obj === 'object' || typeof obj === 'function'),
+    'toArray: Array-like object expected'
+  ) : invariant(!Array.isArray(obj) &&
+  (typeof obj === 'object' || typeof obj === 'function')));
+
+  ("production" !== "development" ? invariant(
+    typeof length === 'number',
+    'toArray: Object needs a length property'
+  ) : invariant(typeof length === 'number'));
+
+  ("production" !== "development" ? invariant(
+    length === 0 ||
+    (length - 1) in obj,
+    'toArray: Object should have keys for indices'
+  ) : invariant(length === 0 ||
+  (length - 1) in obj));
+
+  // Old IE doesn't give collections access to hasOwnProperty. Assume inputs
+  // without method will throw during the slice call and skip straight to the
+  // fallback.
+  if (obj.hasOwnProperty) {
+    try {
+      return Array.prototype.slice.call(obj);
+    } catch (e) {
+      // IE < 9 does not support Array#slice on collections objects
+    }
+  }
+
+  // Fall back to copying key by key. This assumes all keys have a value,
+  // so will not preserve sparsely populated inputs.
+  var ret = Array(length);
+  for (var ii = 0; ii < length; ii++) {
+    ret[ii] = obj[ii];
+  }
+  return ret;
+}
+
+module.exports = toArray;
+
+},{"./invariant":104}],123:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  *
@@ -15443,7 +15653,6 @@ function traverseAllChildren(children, callback, traverseContext) {
 
 module.exports = traverseAllChildren;
 
-},{"./ReactTextComponent":66,"./invariant":106}]},{},[26])
-(26)
+},{"./ReactTextComponent":65,"./invariant":104}]},{},[24])
+(24)
 });
-;

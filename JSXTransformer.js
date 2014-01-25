@@ -11695,7 +11695,7 @@ var visitors = require('./fbtransform/visitors').transformVisitors;
 var docblock = require('jstransform/src/docblock');
 
 function transformReact(source) {
-  return transform(visitors.react, source, {sourceMap: true});
+  return transform(visitors.react, source);
 }
 
 exports.transform = transformReact;

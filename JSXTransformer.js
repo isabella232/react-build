@@ -1,5 +1,5 @@
 /**
- * JSXTransformer v0.9.0-alpha
+ * JSXTransformer v0.9.0
  */
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.JSXTransformer=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // shim for using process in browser
@@ -133,7 +133,7 @@ function Buffer (subject, encoding, noZero) {
     // Preferred: Return an augmented `Uint8Array` instance for best performance
     buf = augment(new Uint8Array(length))
   } else {
-    // Fallback: Return this instance of Buffer
+    // Fallback: Return THIS instance of Buffer (created by `new`)
     buf = this
     buf.length = length
     buf._isBuffer = true
@@ -175,6 +175,10 @@ Buffer.isEncoding = function (encoding) {
     case 'binary':
     case 'base64':
     case 'raw':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
       return true
     default:
       return false
@@ -182,24 +186,38 @@ Buffer.isEncoding = function (encoding) {
 }
 
 Buffer.isBuffer = function (b) {
-  return (b != null && b._isBuffer) || false
+  return !!(b !== null && b !== undefined && b._isBuffer)
 }
 
 Buffer.byteLength = function (str, encoding) {
+  var ret
+  str = str + ''
   switch (encoding || 'utf8') {
     case 'hex':
-      return str.length / 2
+      ret = str.length / 2
+      break
     case 'utf8':
     case 'utf-8':
-      return utf8ToBytes(str).length
+      ret = utf8ToBytes(str).length
+      break
     case 'ascii':
     case 'binary':
-      return str.length
+    case 'raw':
+      ret = str.length
+      break
     case 'base64':
-      return base64ToBytes(str).length
+      ret = base64ToBytes(str).length
+      break
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      ret = str.length * 2
+      break
     default:
       throw new Error('Unknown encoding')
   }
+  return ret
 }
 
 Buffer.concat = function (list, totalLength) {
@@ -262,13 +280,15 @@ function _hexWrite (buf, string, offset, length) {
 }
 
 function _utf8Write (buf, string, offset, length) {
-  var bytes, pos
-  return Buffer._charsWritten = blitBuffer(utf8ToBytes(string), buf, offset, length)
+  var charsWritten = Buffer._charsWritten =
+    blitBuffer(utf8ToBytes(string), buf, offset, length)
+  return charsWritten
 }
 
 function _asciiWrite (buf, string, offset, length) {
-  var bytes, pos
-  return Buffer._charsWritten = blitBuffer(asciiToBytes(string), buf, offset, length)
+  var charsWritten = Buffer._charsWritten =
+    blitBuffer(asciiToBytes(string), buf, offset, length)
+  return charsWritten
 }
 
 function _binaryWrite (buf, string, offset, length) {
@@ -276,8 +296,9 @@ function _binaryWrite (buf, string, offset, length) {
 }
 
 function _base64Write (buf, string, offset, length) {
-  var bytes, pos
-  return Buffer._charsWritten = blitBuffer(base64ToBytes(string), buf, offset, length)
+  var charsWritten = Buffer._charsWritten =
+    blitBuffer(base64ToBytes(string), buf, offset, length)
+  return charsWritten
 }
 
 Buffer.prototype.write = function (string, offset, length, encoding) {
@@ -312,6 +333,10 @@ Buffer.prototype.write = function (string, offset, length, encoding) {
       return _hexWrite(this, string, offset, length)
     case 'utf8':
     case 'utf-8':
+    case 'ucs2': // TODO: No support for ucs2 or utf16le encodings yet
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
       return _utf8Write(this, string, offset, length)
     case 'ascii':
       return _asciiWrite(this, string, offset, length)
@@ -342,6 +367,10 @@ Buffer.prototype.toString = function (encoding, start, end) {
       return _hexSlice(self, start, end)
     case 'utf8':
     case 'utf-8':
+    case 'ucs2': // TODO: No support for ucs2 or utf16le encodings yet
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
       return _utf8Slice(self, start, end)
     case 'ascii':
       return _asciiSlice(self, start, end)
@@ -473,16 +502,15 @@ Buffer.prototype.set = function (v, offset) {
 }
 
 Buffer.prototype.readUInt8 = function (offset, noAssert) {
-  var buf = this
   if (!noAssert) {
     assert(offset !== undefined && offset !== null, 'missing offset')
-    assert(offset < buf.length, 'Trying to read beyond buffer length')
+    assert(offset < this.length, 'Trying to read beyond buffer length')
   }
 
-  if (offset >= buf.length)
+  if (offset >= this.length)
     return
 
-  return buf[offset]
+  return this[offset]
 }
 
 function _readUInt16 (buf, offset, littleEndian, noAssert) {
@@ -558,21 +586,20 @@ Buffer.prototype.readUInt32BE = function (offset, noAssert) {
 }
 
 Buffer.prototype.readInt8 = function (offset, noAssert) {
-  var buf = this
   if (!noAssert) {
     assert(offset !== undefined && offset !== null,
         'missing offset')
-    assert(offset < buf.length, 'Trying to read beyond buffer length')
+    assert(offset < this.length, 'Trying to read beyond buffer length')
   }
 
-  if (offset >= buf.length)
+  if (offset >= this.length)
     return
 
-  var neg = buf[offset] & 0x80
+  var neg = this[offset] & 0x80
   if (neg)
-    return (0xff - buf[offset] + 1) * -1
+    return (0xff - this[offset] + 1) * -1
   else
-    return buf[offset]
+    return this[offset]
 }
 
 function _readInt16 (buf, offset, littleEndian, noAssert) {
@@ -664,17 +691,16 @@ Buffer.prototype.readDoubleBE = function (offset, noAssert) {
 }
 
 Buffer.prototype.writeUInt8 = function (value, offset, noAssert) {
-  var buf = this
   if (!noAssert) {
     assert(value !== undefined && value !== null, 'missing value')
     assert(offset !== undefined && offset !== null, 'missing offset')
-    assert(offset < buf.length, 'trying to write beyond buffer length')
+    assert(offset < this.length, 'trying to write beyond buffer length')
     verifuint(value, 0xff)
   }
 
-  if (offset >= buf.length) return
+  if (offset >= this.length) return
 
-  buf[offset] = value
+  this[offset] = value
 }
 
 function _writeUInt16 (buf, value, offset, littleEndian, noAssert) {
@@ -733,21 +759,20 @@ Buffer.prototype.writeUInt32BE = function (value, offset, noAssert) {
 }
 
 Buffer.prototype.writeInt8 = function (value, offset, noAssert) {
-  var buf = this
   if (!noAssert) {
     assert(value !== undefined && value !== null, 'missing value')
     assert(offset !== undefined && offset !== null, 'missing offset')
-    assert(offset < buf.length, 'Trying to write beyond buffer length')
+    assert(offset < this.length, 'Trying to write beyond buffer length')
     verifsint(value, 0x7f, -0x80)
   }
 
-  if (offset >= buf.length)
+  if (offset >= this.length)
     return
 
   if (value >= 0)
-    buf.writeUInt8(value, offset, noAssert)
+    this.writeUInt8(value, offset, noAssert)
   else
-    buf.writeUInt8(0xff + value + 1, offset, noAssert)
+    this.writeUInt8(0xff + value + 1, offset, noAssert)
 }
 
 function _writeInt16 (buf, value, offset, littleEndian, noAssert) {
@@ -1641,15 +1666,15 @@ parseYieldExpression: true
     TokenName[Token.RegularExpression] = 'RegularExpression';
 
     // A function following one of those tokens is an expression.
-    FnExprTokens = ["(", "{", "[", "in", "typeof", "instanceof", "new",
-                    "return", "case", "delete", "throw", "void",
+    FnExprTokens = ['(', '{', '[', 'in', 'typeof', 'instanceof', 'new',
+                    'return', 'case', 'delete', 'throw', 'void',
                     // assignment operators
-                    "=", "+=", "-=", "*=", "/=", "%=", "<<=", ">>=", ">>>=",
-                    "&=", "|=", "^=", ",",
+                    '=', '+=', '-=', '*=', '/=', '%=', '<<=', '>>=', '>>>=',
+                    '&=', '|=', '^=', ',',
                     // binary/unary operators
-                    "+", "-", "*", "/", "%", "++", "--", "<<", ">>", ">>>", "&",
-                    "|", "^", "!", "~", "&&", "||", "?", ":", "===", "==", ">=",
-                    "<=", "<", ">", "!=", "!=="];
+                    '+', '-', '*', '/', '%', '++', '--', '<<', '>>', '>>>', '&',
+                    '|', '^', '!', '~', '&&', '||', '?', ':', '===', '==', '>=',
+                    '<=', '<', '>', '!=', '!=='];
 
     Syntax = {
         ArrayExpression: 'ArrayExpression',
@@ -1733,7 +1758,7 @@ parseYieldExpression: true
     };
 
     ClassPropertyType = {
-        static: 'static',
+        'static': 'static',
         prototype: 'prototype'
     };
 
@@ -2906,31 +2931,31 @@ parseYieldExpression: true
             // Nothing before that: it cannot be a division.
             return scanRegExp();
         }
-        if (prevToken.type === "Punctuator") {
-            if (prevToken.value === ")") {
+        if (prevToken.type === 'Punctuator') {
+            if (prevToken.value === ')') {
                 checkToken = extra.tokens[extra.openParenToken - 1];
                 if (checkToken &&
-                        checkToken.type === "Keyword" &&
-                        (checkToken.value === "if" ||
-                         checkToken.value === "while" ||
-                         checkToken.value === "for" ||
-                         checkToken.value === "with")) {
+                        checkToken.type === 'Keyword' &&
+                        (checkToken.value === 'if' ||
+                         checkToken.value === 'while' ||
+                         checkToken.value === 'for' ||
+                         checkToken.value === 'with')) {
                     return scanRegExp();
                 }
                 return scanPunctuator();
             }
-            if (prevToken.value === "}") {
+            if (prevToken.value === '}') {
                 // Dividing a function by anything makes little sense,
                 // but we have to check for that.
                 if (extra.tokens[extra.openCurlyToken - 3] &&
-                        extra.tokens[extra.openCurlyToken - 3].type === "Keyword") {
+                        extra.tokens[extra.openCurlyToken - 3].type === 'Keyword') {
                     // Anonymous function.
                     checkToken = extra.tokens[extra.openCurlyToken - 4];
                     if (!checkToken) {
                         return scanPunctuator();
                     }
                 } else if (extra.tokens[extra.openCurlyToken - 4] &&
-                        extra.tokens[extra.openCurlyToken - 4].type === "Keyword") {
+                        extra.tokens[extra.openCurlyToken - 4].type === 'Keyword') {
                     // Named function.
                     checkToken = extra.tokens[extra.openCurlyToken - 5];
                     if (!checkToken) {
@@ -2950,7 +2975,7 @@ parseYieldExpression: true
             }
             return scanRegExp();
         }
-        if (prevToken.type === "Keyword") {
+        if (prevToken.type === 'Keyword') {
             return scanRegExp();
         }
         return scanPunctuator();
@@ -2959,11 +2984,9 @@ parseYieldExpression: true
     function advance() {
         var ch;
 
-        if (state.inXJSChild) {
-            return advanceXJSChild();
+        if (!state.inXJSChild) {
+            skipComment();
         }
-
-        skipComment();
 
         if (index >= length) {
             return {
@@ -2972,6 +2995,10 @@ parseYieldExpression: true
                 lineStart: lineStart,
                 range: [index, index]
             };
+        }
+
+        if (state.inXJSChild) {
+            return advanceXJSChild();
         }
 
         ch = source.charCodeAt(index);
@@ -3210,7 +3237,7 @@ parseYieldExpression: true
                 type: Syntax.ForOfStatement,
                 left: left,
                 right: right,
-                body: body,
+                body: body
             };
         },
 
@@ -3257,13 +3284,13 @@ parseYieldExpression: true
             };
         },
 
-        createTypeAnnotation: function (typeIdentifier, paramTypes, returnType, isNullable) {
+        createTypeAnnotation: function (typeIdentifier, paramTypes, returnType, nullable) {
             return {
                 type: Syntax.TypeAnnotation,
                 id: typeIdentifier,
                 paramTypes: paramTypes,
                 returnType: returnType,
-                isNullable: isNullable
+                nullable: nullable
             };
         },
 
@@ -3294,11 +3321,8 @@ parseYieldExpression: true
         createXJSElement: function (openingElement, closingElement, children) {
             return {
                 type: Syntax.XJSElement,
-                name: openingElement.name,
-                selfClosing: openingElement.selfClosing,
                 openingElement: openingElement,
                 closingElement: closingElement,
-                attributes: openingElement.attributes,
                 children: children
             };
         },
@@ -3559,7 +3583,7 @@ parseYieldExpression: true
                 key: key,
                 value: value,
                 kind: kind,
-                'static': propertyType === ClassPropertyType.static
+                'static': propertyType === ClassPropertyType["static"]
             };
         },
 
@@ -3718,7 +3742,7 @@ parseYieldExpression: true
             throwError(token, Messages.UnexpectedNumber);
         }
 
-        if (token.type === Token.StringLiteral) {
+        if (token.type === Token.StringLiteral || token.type === Token.XJSText) {
             throwError(token, Messages.UnexpectedString);
         }
 
@@ -3854,7 +3878,7 @@ parseYieldExpression: true
                     throwError({}, Messages.ComprehensionError);
                 }
                 matchKeyword('for');
-                tmp = parseForStatement({ignore_body: true});
+                tmp = parseForStatement({ignoreBody: true});
                 tmp.of = tmp.type === Syntax.ForOfStatement;
                 tmp.type = Syntax.ComprehensionBlock;
                 if (tmp.left.kind) { // can't be let or const
@@ -4117,13 +4141,9 @@ parseYieldExpression: true
 
         ++state.parenthesizedCount;
 
-        state.allowArrowFunction = !state.allowArrowFunction;
         expr = parseExpression();
-        state.allowArrowFunction = false;
 
-        if (expr.type !== Syntax.ArrowFunctionExpression) {
-            expect(')');
-        }
+        expect(')');
 
         return expr;
     }
@@ -4630,30 +4650,38 @@ parseYieldExpression: true
                 params.push(param);
                 defaults.push(null);
             } else if (param.type === Syntax.SpreadElement) {
-                assert(i === len - 1, "It is guaranteed that SpreadElement is last element by parseExpression");
+                assert(i === len - 1, 'It is guaranteed that SpreadElement is last element by parseExpression');
                 reinterpretAsDestructuredParameter(options, param.argument);
                 rest = param.argument;
             } else if (param.type === Syntax.AssignmentExpression) {
                 params.push(param.left);
                 defaults.push(param.right);
                 ++defaultCount;
+                validateParam(options, param.left, param.left.name);
             } else {
                 return null;
             }
         }
 
-        if (options.firstRestricted) {
-            throwError(options.firstRestricted, options.message);
-        }
-        if (options.stricted) {
-            throwErrorTolerant(options.stricted, options.message);
+        if (options.message === Messages.StrictParamDupe) {
+            throwError(
+                strict ? options.stricted : options.firstRestricted,
+                options.message
+            );
         }
 
         if (defaultCount === 0) {
             defaults = [];
         }
 
-        return { params: params, defaults: defaults, rest: rest };
+        return {
+            params: params,
+            defaults: defaults,
+            rest: rest,
+            stricted: options.stricted,
+            firstRestricted: options.firstRestricted,
+            message: options.message
+        };
     }
 
     function parseArrowFunctionExpression(options) {
@@ -4663,9 +4691,16 @@ parseYieldExpression: true
 
         previousStrict = strict;
         previousYieldAllowed = state.yieldAllowed;
-        strict = true;
         state.yieldAllowed = false;
         body = parseConciseBody();
+
+        if (strict && options.firstRestricted) {
+            throwError(options.firstRestricted, options.message);
+        }
+        if (strict && options.stricted) {
+            throwErrorTolerant(options.stricted, options.message);
+        }
+
         strict = previousStrict;
         state.yieldAllowed = previousYieldAllowed;
 
@@ -4695,12 +4730,16 @@ parseYieldExpression: true
         token = lookahead;
         expr = parseConditionalExpression();
 
-        if (match('=>') && expr.type === Syntax.Identifier) {
-            if (state.parenthesizedCount === oldParenthesizedCount || state.parenthesizedCount === (oldParenthesizedCount + 1)) {
-                if (isRestrictedWord(expr.name)) {
-                    throwError({}, Messages.StrictParamName);
-                }
-                return parseArrowFunctionExpression({ params: [ expr ], defaults: [], rest: null });
+        if (match('=>') &&
+                (state.parenthesizedCount === oldParenthesizedCount ||
+                state.parenthesizedCount === (oldParenthesizedCount + 1))) {
+            if (expr.type === Syntax.Identifier) {
+                params = reinterpretAsCoverFormalsList([ expr ]);
+            } else if (expr.type === Syntax.SequenceExpression) {
+                params = reinterpretAsCoverFormalsList(expr.expressions);
+            }
+            if (params) {
+                return parseArrowFunctionExpression(params);
             }
         }
 
@@ -4726,7 +4765,9 @@ parseYieldExpression: true
     // 11.14 Comma Operator
 
     function parseExpression() {
-        var expr, expressions, sequence, coverFormalsList, spreadFound, token;
+        var expr, expressions, sequence, coverFormalsList, spreadFound, oldParenthesizedCount;
+
+        oldParenthesizedCount = state.parenthesizedCount;
 
         expr = parseAssignmentExpression();
         expressions = [ expr ];
@@ -4753,23 +4794,19 @@ parseYieldExpression: true
             sequence = delegate.createSequenceExpression(expressions);
         }
 
-        if (state.allowArrowFunction && match(')')) {
-            token = lookahead2();
-            if (token.value === '=>') {
-                lex();
-
-                state.allowArrowFunction = false;
-                expr = expressions;
+        if (match('=>')) {
+            // Do not allow nested parentheses on the LHS of the =>.
+            if (state.parenthesizedCount === oldParenthesizedCount || state.parenthesizedCount === (oldParenthesizedCount + 1)) {
+                expr = expr.type === Syntax.SequenceExpression ? expr.expressions : expressions;
                 coverFormalsList = reinterpretAsCoverFormalsList(expr);
                 if (coverFormalsList) {
                     return parseArrowFunctionExpression(coverFormalsList);
                 }
-
-                throwUnexpected(token);
             }
+            throwUnexpected(lex());
         }
 
-        if (spreadFound) {
+        if (spreadFound && lookahead2().value !== '=>') {
             throwError({}, Messages.IllegalSpread);
         }
 
@@ -4812,7 +4849,7 @@ parseYieldExpression: true
 
     function parseTypeAnnotation(dontExpectColon) {
         var typeIdentifier = null, paramTypes = null, returnType = null,
-            isNullable = false;
+            nullable = false;
 
         if (!dontExpectColon) {
             expect(':');
@@ -4820,7 +4857,7 @@ parseYieldExpression: true
 
         if (match('?')) {
             lex();
-            isNullable = true;
+            nullable = true;
         }
 
         if (lookahead.type === Token.Identifier) {
@@ -4850,7 +4887,7 @@ parseYieldExpression: true
             typeIdentifier,
             paramTypes,
             returnType,
-            isNullable
+            nullable
         );
     }
 
@@ -5204,7 +5241,7 @@ parseYieldExpression: true
         expectKeyword('for');
 
         // http://wiki.ecmascript.org/doku.php?id=proposals:iterators_and_generators&s=each
-        if (matchContextualKeyword("each")) {
+        if (matchContextualKeyword('each')) {
             throwError({}, Messages.EachNotAllowed);
         }
 
@@ -5273,7 +5310,7 @@ parseYieldExpression: true
         oldInIteration = state.inIteration;
         state.inIteration = true;
 
-        if (!(opts !== undefined && opts.ignore_body)) {
+        if (!(opts !== undefined && opts.ignoreBody)) {
             body = parseStatement();
         }
 
@@ -5851,7 +5888,7 @@ parseYieldExpression: true
     }
 
     function parseFunctionDeclaration() {
-        var id, body, token, tmp, firstRestricted, message, previousStrict, previousYieldAllowed, generator, expression;
+        var id, body, token, tmp, firstRestricted, message, previousStrict, previousYieldAllowed, generator;
 
         expectKeyword('function');
 
@@ -5889,9 +5926,7 @@ parseYieldExpression: true
         previousYieldAllowed = state.yieldAllowed;
         state.yieldAllowed = generator;
 
-        // here we redo some work in order to set 'expression'
-        expression = !match('{');
-        body = parseConciseBody();
+        body = parseFunctionSourceElements();
 
         if (strict && firstRestricted) {
             throwError(firstRestricted, message);
@@ -5905,12 +5940,12 @@ parseYieldExpression: true
         strict = previousStrict;
         state.yieldAllowed = previousYieldAllowed;
 
-        return delegate.createFunctionDeclaration(id, tmp.params, tmp.defaults, body, tmp.rest, generator, expression,
+        return delegate.createFunctionDeclaration(id, tmp.params, tmp.defaults, body, tmp.rest, generator, false,
                 tmp.returnTypeAnnotation);
     }
 
     function parseFunctionExpression() {
-        var token, id = null, firstRestricted, message, tmp, body, previousStrict, previousYieldAllowed, generator, expression;
+        var token, id = null, firstRestricted, message, tmp, body, previousStrict, previousYieldAllowed, generator;
 
         expectKeyword('function');
 
@@ -5949,9 +5984,7 @@ parseYieldExpression: true
         previousYieldAllowed = state.yieldAllowed;
         state.yieldAllowed = generator;
 
-        // here we redo some work in order to set 'expression'
-        expression = !match('{');
-        body = parseConciseBody();
+        body = parseFunctionSourceElements();
 
         if (strict && firstRestricted) {
             throwError(firstRestricted, message);
@@ -5965,12 +5998,12 @@ parseYieldExpression: true
         strict = previousStrict;
         state.yieldAllowed = previousYieldAllowed;
 
-        return delegate.createFunctionExpression(id, tmp.params, tmp.defaults, body, tmp.rest, generator, expression,
+        return delegate.createFunctionExpression(id, tmp.params, tmp.defaults, body, tmp.rest, generator, false,
                 tmp.returnTypeAnnotation);
     }
 
     function parseYieldExpression() {
-        var delegateFlag, expr, previousYieldAllowed;
+        var delegateFlag, expr;
 
         expectKeyword('yield');
 
@@ -5984,11 +6017,7 @@ parseYieldExpression: true
             delegateFlag = true;
         }
 
-        // It is a Syntax Error if any AssignmentExpression Contains YieldExpression.
-        previousYieldAllowed = state.yieldAllowed;
-        state.yieldAllowed = false;
         expr = parseAssignmentExpression();
-        state.yieldAllowed = previousYieldAllowed;
         state.yieldFound = true;
 
         return delegate.createYieldExpression(expr, delegateFlag);
@@ -6000,7 +6029,7 @@ parseYieldExpression: true
         var token, key, param, propType, isValidDuplicateProp = false;
 
         if (lookahead.value === 'static') {
-            propType = ClassPropertyType.static;
+            propType = ClassPropertyType["static"];
             lex();
         } else {
             propType = ClassPropertyType.prototype;
@@ -6110,7 +6139,7 @@ parseYieldExpression: true
     function parseClassBody() {
         var classElement, classElements = [], existingProps = {};
 
-        existingProps[ClassPropertyType.static] = {};
+        existingProps[ClassPropertyType["static"]] = {};
         existingProps[ClassPropertyType.prototype] = {};
 
         expect('{');
@@ -6889,6 +6918,8 @@ parseYieldExpression: true
                         'expression'
                 );
             }
+        } else if (match('<')) {
+            value = parseXJSElement();
         } else if (lookahead.type === Token.XJSText) {
             value = delegate.createLiteral(lex());
         } else {
@@ -6949,30 +6980,35 @@ parseYieldExpression: true
         } else if (lookahead.type === Token.XJSText) {
             token = delegate.createLiteral(lex());
         } else {
-            state.inXJSChild = false;
             token = parseXJSElement();
-            state.inXJSChild = true;
         }
         return token;
     }
 
     function parseXJSClosingElement() {
-        var name, origInXJSTag;
+        var name, origInXJSChild, origInXJSTag;
+        origInXJSChild = state.inXJSChild;
         origInXJSTag = state.inXJSTag;
-        state.inXJSTag = true;
         state.inXJSChild = false;
+        state.inXJSTag = true;
         expect('<');
         expect('/');
         name = parseXJSIdentifier();
+        // Because advance() (called by lex() called by expect()) expects there
+        // to be a valid token after >, it needs to know whether to look for a
+        // standard JS token or an XJS text node
+        state.inXJSChild = origInXJSChild;
         state.inXJSTag = origInXJSTag;
         expect('>');
         return delegate.createXJSClosingElement(name);
     }
 
     function parseXJSOpeningElement() {
-        var name, attribute, attributes = [], selfClosing = false, origInXJSTag;
+        var name, attribute, attributes = [], selfClosing = false, origInXJSChild, origInXJSTag;
 
+        origInXJSChild = state.inXJSChild;
         origInXJSTag = state.inXJSTag;
+        state.inXJSChild = false;
         state.inXJSTag = true;
 
         expect('<');
@@ -6989,6 +7025,10 @@ parseYieldExpression: true
 
         if (lookahead.value === '/') {
             expect('/');
+            // Because advance() (called by lex() called by expect()) expects
+            // there to be a valid token after >, it needs to know whether to
+            // look for a standard JS token or an XJS text node
+            state.inXJSChild = origInXJSChild;
             expect('>');
             selfClosing = true;
         } else {
@@ -6999,14 +7039,15 @@ parseYieldExpression: true
     }
 
     function parseXJSElement() {
-        var openingElement, closingElement, children = [], origInXJSChild;
+        var openingElement, closingElement, children = [], origInXJSChild, origInXJSTag;
 
+        origInXJSChild = state.inXJSChild;
+        origInXJSTag = state.inXJSTag;
         openingElement = parseXJSOpeningElement();
 
         if (!openingElement.selfClosing) {
-            origInXJSChild = state.inXJSChild;
             while (index < length) {
-                state.inXJSChild = false; // </ should not be considered in the child
+                state.inXJSChild = false; // Call lookahead2() with inXJSChild = false because </ should not be considered in the child
                 if (lookahead.value === '<' && lookahead2().value === '/') {
                     break;
                 }
@@ -7015,6 +7056,7 @@ parseYieldExpression: true
                 children.push(parseXJSChild());
             }
             state.inXJSChild = origInXJSChild;
+            state.inXJSTag = origInXJSTag;
             closingElement = parseXJSClosingElement();
             if (closingElement.name.namespace !== openingElement.name.namespace || closingElement.name.name !== openingElement.name.name) {
                 throwError({}, Messages.ExpectedXJSClosingTag, openingElement.name.namespace ? openingElement.name.namespace + ':' + openingElement.name.name : openingElement.name.name);
@@ -7162,8 +7204,8 @@ parseYieldExpression: true
 
         apply: function (node) {
             var nodeType = typeof node;
-            assert(nodeType === "object",
-                "Applying location marker to an unexpected node type: " +
+            assert(nodeType === 'object',
+                'Applying location marker to an unexpected node type: ' +
                     nodeType);
 
             if (extra.range) {
@@ -7197,19 +7239,11 @@ parseYieldExpression: true
         expect('(');
 
         ++state.parenthesizedCount;
-
-        state.allowArrowFunction = !state.allowArrowFunction;
         expr = parseExpression();
-        state.allowArrowFunction = false;
 
-        if (expr.type === 'ArrowFunctionExpression') {
-            marker.end();
-            marker.apply(expr);
-        } else {
-            expect(')');
-            marker.end();
-            marker.applyGroup(expr);
-        }
+        expect(')');
+        marker.end();
+        marker.applyGroup(expr);
 
         return expr;
     }
@@ -7389,6 +7423,7 @@ parseYieldExpression: true
             wrapTrackingPreserveWhitespace =
                 wrapTrackingFunction(extra.range, extra.loc, true);
 
+            extra.parseArrayInitialiser = parseArrayInitialiser;
             extra.parseAssignmentExpression = parseAssignmentExpression;
             extra.parseBinaryExpression = parseBinaryExpression;
             extra.parseBlock = parseBlock;
@@ -7411,6 +7446,7 @@ parseYieldExpression: true
             extra.parseModuleBlock = parseModuleBlock;
             extra.parseNewExpression = parseNewExpression;
             extra.parseNonComputedProperty = parseNonComputedProperty;
+            extra.parseObjectInitialiser = parseObjectInitialiser;
             extra.parseObjectProperty = parseObjectProperty;
             extra.parseObjectPropertyKey = parseObjectPropertyKey;
             extra.parsePostfixExpression = parsePostfixExpression;
@@ -7441,6 +7477,7 @@ parseYieldExpression: true
             extra.parseXJSClosingElement = parseXJSClosingElement;
             extra.parseXJSOpeningElement = parseXJSOpeningElement;
 
+            parseArrayInitialiser = wrapTracking(extra.parseArrayInitialiser);
             parseAssignmentExpression = wrapTracking(extra.parseAssignmentExpression);
             parseBinaryExpression = wrapTracking(extra.parseBinaryExpression);
             parseBlock = wrapTracking(extra.parseBlock);
@@ -7464,6 +7501,7 @@ parseYieldExpression: true
             parseLeftHandSideExpression = wrapTracking(parseLeftHandSideExpression);
             parseNewExpression = wrapTracking(extra.parseNewExpression);
             parseNonComputedProperty = wrapTracking(extra.parseNonComputedProperty);
+            parseObjectInitialiser = wrapTracking(extra.parseObjectInitialiser);
             parseObjectProperty = wrapTracking(extra.parseObjectProperty);
             parseObjectPropertyKey = wrapTracking(extra.parseObjectPropertyKey);
             parsePostfixExpression = wrapTracking(extra.parsePostfixExpression);
@@ -7510,6 +7548,7 @@ parseYieldExpression: true
         }
 
         if (extra.range || extra.loc) {
+            parseArrayInitialiser = extra.parseArrayInitialiser;
             parseAssignmentExpression = extra.parseAssignmentExpression;
             parseBinaryExpression = extra.parseBinaryExpression;
             parseBlock = extra.parseBlock;
@@ -7534,6 +7573,7 @@ parseYieldExpression: true
             parseModuleBlock = extra.parseModuleBlock;
             parseNewExpression = extra.parseNewExpression;
             parseNonComputedProperty = extra.parseNonComputedProperty;
+            parseObjectInitialiser = extra.parseObjectInitialiser;
             parseObjectProperty = extra.parseObjectProperty;
             parseObjectPropertyKey = extra.parseObjectPropertyKey;
             parsePostfixExpression = extra.parsePostfixExpression;
@@ -7717,6 +7757,8 @@ parseYieldExpression: true
             inFunctionBody: false,
             inIteration: false,
             inSwitch: false,
+            inXJSChild: false,
+            inXJSTag: false,
             yieldAllowed: false,
             yieldFound: false
         };
@@ -7784,7 +7826,7 @@ parseYieldExpression: true
         return program;
     }
 
-    // Sync with package.json and component.json.
+    // Sync with *.json manifests.
     exports.version = '1.1.0-dev-harmony';
 
     exports.tokenize = tokenize;
@@ -10000,7 +10042,7 @@ function extract(contents) {
 
 
 var commentStartRe = /^\/\*\*?/;
-var commentEndRe = /\*\/$/;
+var commentEndRe = /\*+\/$/;
 var wsRe = /[\t ]+/g;
 var stringStartRe = /(\r?\n|^) *\*/g;
 var multilineRe = /(?:^|\r?\n) *(@[^\r\n]*?) *\r?\n *([^@\r\n\s][^@\r\n]+?) *\r?\n/g;
@@ -11068,7 +11110,7 @@ function visitClassFunctionExpression(traverse, node, path, state) {
       methodName = _getMungedName(methodName, state);
     }
 
-    var prototypeOrStatic = methodNode.static ? '' : 'prototype.';
+    var prototypeOrStatic = methodNode["static"] ? '' : 'prototype.';
     utils.append(
       state.className + '.' + prototypeOrStatic + methodName + '=function',
       state
@@ -11668,7 +11710,7 @@ exports.visitorList = [
 
 },{"../src/utils":20,"esprima-fb":6}],26:[function(require,module,exports){
 /**
- * Copyright 2013 Facebook, Inc.
+ * Copyright 2013-2014 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11694,8 +11736,16 @@ var transform = require('jstransform').transform;
 var visitors = require('./fbtransform/visitors').transformVisitors;
 var docblock = require('jstransform/src/docblock');
 
+// The source-map library relies on Object.defineProperty, but IE8 doesn't
+// support it fully even with es5-sham. Indeed, es5-sham's defineProperty
+// throws when Object.prototype.__defineGetter__ is missing, so we skip building
+// the source map in that case.
+var supportsAccessors = Object.prototype.hasOwnProperty('__defineGetter__');
+
 function transformReact(source) {
-  return transform(visitors.react, source);
+  return transform(visitors.react, source, {
+    sourceMap: false
+  });
 }
 
 exports.transform = transformReact;
@@ -11764,6 +11814,10 @@ var transformCode = function(code, source) {
       }
       e.message += createSourceCodeErrorMessage(code, e);
       throw e;
+    }
+
+    if (!transformed.sourceMap) {
+      return transformed.code;
     }
 
     var map = transformed.sourceMap.toJSON();
@@ -11853,7 +11907,7 @@ if (typeof window !== "undefined" && window !== null) {
 
 },{"./fbtransform/visitors":30,"buffer":2,"jstransform":19,"jstransform/src/docblock":18}],27:[function(require,module,exports){
 /**
- * Copyright 2013 Facebook, Inc.
+ * Copyright 2013-2014 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11895,40 +11949,40 @@ var quoteAttrName = require('./xjs').quoteAttrName;
 
 var JSX_ATTRIBUTE_TRANSFORMS = {
   cxName: function(attr) {
-    if (attr.value.type !== Syntax.Literal) {
-      throw new Error("cx only accepts a string literal");
-    } else {
-      var classNames = attr.value.value.split(/\s+/g);
-      return 'cx(' + classNames.map(JSON.stringify).join(',') + ')';
-    }
+    throw new Error(
+      "cxName is no longer supported, use className={cx(...)} instead"
+    );
   }
 };
 
 function visitReactTag(traverse, object, path, state) {
   var jsxObjIdent = utils.getDocblock(state).jsx;
+  var openingElement = object.openingElement;
+  var nameObject = openingElement.name;
+  var attributesObject = openingElement.attributes;
 
-  utils.catchup(object.openingElement.range[0], state);
+  utils.catchup(openingElement.range[0], state);
 
-  if (object.name.namespace) {
+  if (nameObject.namespace) {
     throw new Error(
        'Namespace tags are not supported. ReactJSX is not XML.');
   }
 
-  var isFallbackTag = FALLBACK_TAGS[object.name.name];
+  var isFallbackTag = FALLBACK_TAGS[nameObject.name];
   utils.append(
-    (isFallbackTag ? jsxObjIdent + '.' : '') + (object.name.name) + '(',
+    (isFallbackTag ? jsxObjIdent + '.' : '') + (nameObject.name) + '(',
     state
   );
 
-  utils.move(object.name.range[1], state);
+  utils.move(nameObject.range[1], state);
 
   // if we don't have any attributes, pass in null
-  if (object.attributes.length === 0) {
+  if (attributesObject.length === 0) {
     utils.append('null', state);
   }
 
   // write attributes
-  object.attributes.forEach(function(attr, index) {
+  attributesObject.forEach(function(attr, index) {
     utils.catchup(attr.range[0], state);
     if (attr.name.namespace) {
       throw new Error(
@@ -11936,7 +11990,7 @@ function visitReactTag(traverse, object, path, state) {
     }
     var name = attr.name.name;
     var isFirst = index === 0;
-    var isLast = index === object.attributes.length - 1;
+    var isLast = index === attributesObject.length - 1;
 
     if (isFirst) {
       utils.append('{', state);
@@ -11975,17 +12029,17 @@ function visitReactTag(traverse, object, path, state) {
     utils.catchup(attr.range[1], state);
   });
 
-  if (!object.selfClosing) {
-    utils.catchup(object.openingElement.range[1] - 1, state);
-    utils.move(object.openingElement.range[1], state);
+  if (!openingElement.selfClosing) {
+    utils.catchup(openingElement.range[1] - 1, state);
+    utils.move(openingElement.range[1], state);
   }
 
   // filter out whitespace
   var childrenToRender = object.children.filter(function(child) {
-    return !(child.type === Syntax.Literal &&
-             child.value.match(/^[ \t]*[\r\n][ \t\r\n]*$/));
+    return !(child.type === Syntax.Literal
+             && typeof child.value === 'string'
+             && child.value.match(/^[ \t]*[\r\n][ \t\r\n]*$/));
   });
-  
   if (childrenToRender.length > 0) {
     utils.append(', ', state);
 
@@ -12010,10 +12064,10 @@ function visitReactTag(traverse, object, path, state) {
     });
   }
 
-  if (object.selfClosing) {
+  if (openingElement.selfClosing) {
     // everything up to />
-    utils.catchup(object.openingElement.range[1] - 2, state);
-    utils.move(object.openingElement.range[1], state);
+    utils.catchup(openingElement.range[1] - 2, state);
+    utils.move(openingElement.range[1], state);
   } else {
     // everything up to </ sdflksjfd>
     utils.catchup(object.closingElement.range[0], state);
@@ -12030,11 +12084,13 @@ visitReactTag.test = function(object, path, state) {
   return object.type === Syntax.XJSElement && jsx && jsx.length;
 };
 
-exports.visitReactTag = visitReactTag;
+exports.visitorList = [
+  visitReactTag
+];
 
 },{"./xjs":29,"esprima-fb":6,"jstransform/src/utils":20}],28:[function(require,module,exports){
 /**
- * Copyright 2013 Facebook, Inc.
+ * Copyright 2013-2014 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12137,11 +12193,13 @@ visitReactDisplayName.test = function(object, path, state) {
   }
 };
 
-exports.visitReactDisplayName = visitReactDisplayName;
+exports.visitorList = [
+  visitReactDisplayName
+];
 
 },{"esprima-fb":6,"jstransform/src/utils":20}],29:[function(require,module,exports){
 /**
- * Copyright 2013 Facebook, Inc.
+ * Copyright 2013-2014 Facebook, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12293,27 +12351,27 @@ var knownTags = {
 
 function renderXJSLiteral(object, isLast, state, start, end) {
   var lines = object.value.split(/\r\n|\n|\r/);
-  
+
   if (start) {
     utils.append(start, state);
   }
-  
+
   var lastNonEmptyLine = 0;
-  
+
   lines.forEach(function (line, index) {
     if (line.match(/[^ \t]/)) {
       lastNonEmptyLine = index;
     }
   });
-  
+
   lines.forEach(function (line, index) {
     var isFirstLine = index === 0;
     var isLastLine = index === lines.length - 1;
     var isLastNonEmptyLine = index === lastNonEmptyLine;
-    
+
     // replace rendered whitespace tabs with spaces
     var trimmedLine = line.replace(/\t/g, ' ');
-    
+
     // trim whitespace touching a newline
     if (!isFirstLine) {
       trimmedLine = trimmedLine.replace(/^[ ]+/, '');
@@ -12321,15 +12379,15 @@ function renderXJSLiteral(object, isLast, state, start, end) {
     if (!isLastLine) {
       trimmedLine = trimmedLine.replace(/[ ]+$/, '');
     }
-    
+
     utils.append(line.match(/^[ \t]*/)[0], state);
-    
+
     if (trimmedLine || isLastNonEmptyLine) {
       utils.append(
         JSON.stringify(trimmedLine) +
         (!isLastNonEmptyLine ? "+' '+" : ''),
         state);
-      
+
       if (isLastNonEmptyLine) {
         if (end) {
           utils.append(end, state);
@@ -12338,18 +12396,18 @@ function renderXJSLiteral(object, isLast, state, start, end) {
           utils.append(',', state);
         }
       }
-      
+
       // only restore tail whitespace if line had literals
       if (trimmedLine) {
         utils.append(line.match(/[ \t]*$/)[0], state);
       }
     }
-    
+
     if (!isLastLine) {
       utils.append('\n', state);
     }
   });
-  
+
   utils.move(object.range[1], state);
 }
 
@@ -12401,10 +12459,7 @@ var transformVisitors = {
   'es6-object-short-notation': es6ObjectShortNotation.visitorList,
   'es6-rest-params': es6RestParameters.visitorList,
   'es6-templates': es6Templates.visitorList,
-  'react': [
-    react.visitReactTag,
-    reactDisplayName.visitReactDisplayName
-  ]
+  'react': react.visitorList.concat(reactDisplayName.visitorList)
 };
 
 /**

@@ -12898,14 +12898,22 @@ var ReactTestUtils = {
     return this;
   },
 
+  /**
+   * Register a callback on a component to be run when the component next
+   * updates
+   *
+   * @param {!ReactComponent} component The component to register the callback
+   *                                    on
+   * @param {function} callback The callback to register
+   */
   nextUpdate: function(component, callback) {
     var oldFn = component.componentDidUpdate;
     var newFn;
 
     function wrappedCallback(cb) {
       return function() {
-        cb.apply(this, arguments);
         this.componentDidUpdate = oldFn;
+        cb.apply(this, arguments);
       };
     }
 
@@ -12913,6 +12921,19 @@ var ReactTestUtils = {
       newFn = wrappedCallback(createChainedFunction(oldFn, callback));
     } else {
       newFn = wrappedCallback(callback);
+    }
+
+    component.componentDidUpdate = newFn;
+  },
+
+  allUpdates: function(component, callback) {
+    var oldFn = component.componentDidUpdate;
+    var newFn;
+
+    if (oldFn) {
+      newFn = createChainedFunction(oldFn, callback);
+    } else {
+      newFn = callback;
     }
 
     component.componentDidUpdate = newFn;

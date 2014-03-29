@@ -1,5 +1,5 @@
 /**
- * JSXTransformer v0.9.0
+ * JSXTransformer v0.10.0
  */
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.JSXTransformer=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // shim for using process in browser
@@ -11968,7 +11968,7 @@ function visitReactTag(traverse, object, path, state) {
        'Namespace tags are not supported. ReactJSX is not XML.');
   }
 
-  var isFallbackTag = FALLBACK_TAGS[nameObject.name];
+  var isFallbackTag = FALLBACK_TAGS.hasOwnProperty(nameObject.name);
   utils.append(
     (isFallbackTag ? jsxObjIdent + '.' : '') + (nameObject.name) + '(',
     state
@@ -12009,7 +12009,7 @@ function visitReactTag(traverse, object, path, state) {
       utils.move(attr.name.range[1], state);
       // Use catchupWhiteSpace to skip over the '=' in the attribute
       utils.catchupWhiteSpace(attr.value.range[0], state);
-      if (JSX_ATTRIBUTE_TRANSFORMS[attr.name.name]) {
+      if (JSX_ATTRIBUTE_TRANSFORMS.hasOwnProperty(attr.name.name)) {
         utils.append(JSX_ATTRIBUTE_TRANSFORMS[attr.name.name](attr), state);
         utils.move(attr.value.range[1], state);
         if (!isLast) {
@@ -12041,12 +12041,23 @@ function visitReactTag(traverse, object, path, state) {
              && child.value.match(/^[ \t]*[\r\n][ \t\r\n]*$/));
   });
   if (childrenToRender.length > 0) {
-    utils.append(', ', state);
+    var lastRenderableIndex;
+
+    childrenToRender.forEach(function(child, index) {
+      if (child.type !== Syntax.XJSExpressionContainer ||
+          child.expression.type !== Syntax.XJSEmptyExpression) {
+        lastRenderableIndex = index;
+      }
+    });
+
+    if (lastRenderableIndex !== undefined) {
+      utils.append(', ', state);
+    }
 
     childrenToRender.forEach(function(child, index) {
       utils.catchup(child.range[0], state);
 
-      var isLast = index === childrenToRender.length - 1;
+      var isLast = index >= lastRenderableIndex;
 
       if (child.type === Syntax.Literal) {
         renderXJSLiteral(child, isLast, state);
@@ -12306,6 +12317,7 @@ var knownTags = {
   p: true,
   param: true,
   path: true,
+  polygon: true,
   polyline: true,
   pre: true,
   progress: true,
